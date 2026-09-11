@@ -1,118 +1,126 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DuoArena // Hub</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/integration.css') }}">
 </head>
 <body>
 
-    <!-- Панель статусов под Глеба и Никиту -->
+    {% if user %}
     <div class="user-status-bar">
-        <div>GLEB (YOU): <span class="status-dot online"></span></div>
-        <div class="friend-status">NIKITA: <span class="status-dot offline"></span></div>
+        <div class="user-chip">
+            <img src="{{ user.avatar_url }}" alt="">
+            <div class="user-chip-meta">
+                <strong>{{ user.login }}</strong>
+                <small>GITHUB CONNECTED</small>
+            </div>
+        </div>
+        <a class="auth-link" href="{{ url_for('logout') }}">LOGOUT</a>
     </div>
+    {% else %}
+    <div class="user-status-bar logged-out">
+        <span style="color:var(--text-muted); font-family:var(--font-mono);">NOT AUTHENTICATED</span>
+        <a class="auth-link" href="{{ url_for('login_github') }}">LOGIN WITH GITHUB</a>
+    </div>
+    {% endif %}
 
     <div class="container">
         <header class="header">
             <h1>DUOARENA</h1>
-            <p>// PRIVATE BATTLEGROUND</p>
+            <p>// PRIVATE REALTIME BATTLEGROUND</p>
         </header>
 
         <main class="grid">
-            <!-- 01. Reaction Duel -->
-            <div class="card" style="cursor: default;">
-                <a href="reaction.html" style="text-decoration: none; color: inherit;">
+            <div class="card">
+                <div>
                     <div class="card-tag">01. Speed</div>
                     <div class="card-title">Reaction Duel</div>
-                    <div class="card-desc">Кто быстрее кликнет при изменении цвета экрана. Чистая реакция.</div>
-                </a>
-                <button class="btn-challenge" onclick="sendChallenge(this, 'Reaction Duel')">CHALLENGE NIKITA</button>
+                    <div class="card-desc">Server-controlled signal. Lowest reaction time wins.</div>
+                </div>
+                <div class="hub-card-actions">
+                    <a class="hub-open" href="{{ url_for('reaction') }}">OPEN ARENA</a>
+                </div>
             </div>
 
-            <!-- 02. Typing Duel -->
-            <div class="card" style="cursor: default;">
-                <a href="typing.html" style="text-decoration: none; color: inherit;">
+            <div class="card">
+                <div>
                     <div class="card-tag">02. Focus</div>
                     <div class="card-title">Typing Duel</div>
-                    <div class="card-desc">Битва на скорость набора текста. Проверяет точность и количество слов в минуту.</div>
-                </a>
-                <button class="btn-challenge" onclick="sendChallenge(this, 'Typing Duel')">CHALLENGE NIKITA</button>
+                    <div class="card-desc">Type the same phrase. Higher WPM wins.</div>
+                </div>
+                <div class="hub-card-actions">
+                    <a class="hub-open" href="{{ url_for('typing') }}">OPEN ARENA</a>
+                </div>
             </div>
 
-            <!-- 03. CPS Battle -->
-            <div class="card" style="cursor: default;">
-                <a href="cps.html" style="text-decoration: none; color: inherit;">
+            <div class="card">
+                <div>
                     <div class="card-tag">03. Clicks</div>
                     <div class="card-title">CPS Battle</div>
-                    <div class="card-desc">Тест на количество кликов в секунду за ограниченный промежуток времени. Пощадите мышь.</div>
-                </a>
-                <button class="btn-challenge" onclick="sendChallenge(this, 'CPS Battle')">CHALLENGE NIKITA</button>
+                    <div class="card-desc">Ten seconds. Maximum clicks. Mouse abuse included.</div>
+                </div>
+                <div class="hub-card-actions">
+                    <a class="hub-open" href="{{ url_for('cps') }}">OPEN ARENA</a>
+                </div>
             </div>
 
-            <!-- 04. Aim Duel (НОВЫЙ) -->
-            <div class="card" style="cursor: default;">
-                <a href="aim.html" style="text-decoration: none; color: inherit;">
+            <div class="card">
+                <div>
                     <div class="card-tag">04. Aim</div>
                     <div class="card-title">Aim Duel</div>
-                    <div class="card-desc">Появление мишеней в случайных местах экрана. Битва на скорость и точность клика.</div>
-                </a>
-                <button class="btn-challenge" onclick="sendChallenge(this, 'Aim Duel')">CHALLENGE NIKITA</button>
+                    <div class="card-desc">Hit 15 targets. Higher targets-per-second score wins.</div>
+                </div>
+                <div class="hub-card-actions">
+                    <a class="hub-open" href="{{ url_for('aim') }}">OPEN ARENA</a>
+                </div>
             </div>
 
-            <!-- 05. Blind Timing (НОВЫЙ) -->
-            <div class="card" style="cursor: default;">
-                <a href="blind.html" style="text-decoration: none; color: inherit;">
+            <div class="card">
+                <div>
                     <div class="card-tag">05. Timing</div>
                     <div class="card-title">Blind Timing</div>
-                    <div class="card-desc">Останови таймер вслепую ровно на 5.000 секундах. Проверь внутренние часы.</div>
-                </a>
-                <button class="btn-challenge" onclick="sendChallenge(this, 'Blind Timing')">CHALLENGE NIKITA</button>
+                    <div class="card-desc">Stop as close as possible to exactly 5.000 seconds.</div>
+                </div>
+                <div class="hub-card-actions">
+                    <a class="hub-open" href="{{ url_for('blind') }}">OPEN ARENA</a>
+                </div>
             </div>
 
-            <!-- Statistics -->
-            <a href="stats.html" class="card stats-card">
+            <a href="{{ url_for('stats') }}" class="card stats-card">
                 <div>
                     <div class="card-tag">Global</div>
-                    <div class="card-title" style="margin: 0;">View Full Statistics</div>
+                    <div class="card-title" style="margin:0;">View Full Statistics</div>
                 </div>
-                <div class="card-arrow" style="margin: 0;">→</div>
+                <div class="card-arrow" style="margin:0;">→</div>
             </a>
         </main>
+
+        {% if not user %}
+        <div class="game-message" style="margin-top:2rem;">
+            Login with GitHub to enter game arenas, create rooms and challenge players.
+        </div>
+        {% endif %}
     </div>
 
-    <!-- Всплывающее окно вызова (Toast) -->
-    <div class="challenge-toast" id="challengeToast">
-        <div class="challenge-toast-title">// INCOMING CHALLENGE</div>
-        <div class="challenge-toast-text">Никита принимает вызов и ждет тебя в <span id="gameName" style="color: var(--accent-bright);">Reaction Duel</span>!</div>
-        <div class="challenge-toast-actions">
-            <button class="btn-toast accept" onclick="closeToast()">ACCEPT</button>
-            <button class="btn-toast decline" onclick="closeToast()">DECLINE</button>
+    {% if user %}
+    <div class="challenge-modal" id="challenge-modal">
+        <div class="challenge-card">
+            <div class="room-title">// incoming challenge</div>
+            <h3 id="challenge-title">Challenge received</h3>
+            <p id="challenge-text"></p>
+            <div class="challenge-actions">
+                <button class="room-action" id="challenge-accept" type="button">ACCEPT</button>
+                <button class="secondary-button" id="challenge-decline" type="button">DECLINE</button>
+            </div>
         </div>
     </div>
 
-    <!-- ДЕМО-СКРИПТ ДЛЯ ПРОВЕРКИ ИНТЕРФЕЙСА -->
-    <script>
-        function sendChallenge(button, gameName) {
-            if (button.classList.contains('sending')) return;
-
-            button.classList.add('sending');
-            button.innerText = 'SENDING...';
-
-            setTimeout(() => {
-                document.getElementById('gameName').innerText = gameName;
-                document.getElementById('challengeToast').classList.add('show');
-                
-                button.classList.remove('sending');
-                button.innerText = 'CHALLENGE NIKITA';
-            }, 1200);
-        }
-
-        function closeToast() {
-            document.getElementById('challengeToast').classList.remove('show');
-        }
-    </script>
-
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/hub.js') }}"></script>
+    {% endif %}
 </body>
 </html>

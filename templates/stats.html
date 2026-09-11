@@ -1,85 +1,49 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuoArena // Global Stats</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <title>DuoArena // Statistics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/integration.css') }}">
 </head>
 <body>
-
-    <a href="index.html" class="nav-back">← BACK TO HUB</a>
+    <a href="{{ url_for('index') }}" class="nav-back">← BACK TO HUB</a>
 
     <div class="container">
-        <header class="header" style="margin-bottom: 2rem;">
+        <header class="header" style="margin-bottom:2rem;">
             <h1>LEADERBOARD</h1>
-            <p>// HEAD-TO-HEAD HISTORY</p>
+            <p>// GITHUB USERS / MATCH HISTORY</p>
         </header>
 
-        <div class="stats-grid">
-            <!-- Статистика Никиты (Обнуленная) -->
-            <div class="player-stats-card">
-                <h2 style="color: #fff;">Nikita</h2>
-                <div class="stats-rows">
-                    <div class="stat-row">
-                        <span class="stat-label">Total games</span>
-                        <span class="stat-value">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Wins</span>
-                        <span class="stat-value" style="color: var(--success)">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Losses</span>
-                        <span class="stat-value" style="color: var(--error)">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Winrate</span>
-                        <span class="stat-value highlight">0%</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Best reaction</span>
-                        <span class="stat-value">—</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Best typing speed</span>
-                        <span class="stat-value">—</span>
-                    </div>
-                </div>
+        <div class="player-stats-card">
+            <div class="room-title">// leaderboard</div>
+            <div style="overflow-x:auto;">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Player</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Winrate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <tr><td colspan="5">Loading...</td></tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-            <!-- Статистика Глеба (Обнуленная) -->
-            <div class="player-stats-card">
-                <h2 style="color: #fff;">Gleb</h2>
-                <div class="stats-rows">
-                    <div class="stat-row">
-                        <span class="stat-label">Total games</span>
-                        <span class="stat-value">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Wins</span>
-                        <span class="stat-value" style="color: var(--success)">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Losses</span>
-                        <span class="stat-value" style="color: var(--error)">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Winrate</span>
-                        <span class="stat-value highlight">0%</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Best reaction</span>
-                        <span class="stat-value">—</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Best typing speed</span>
-                        <span class="stat-value">—</span>
-                    </div>
-                </div>
+        <div class="player-stats-card" style="margin-top:1.5rem;">
+            <div class="room-title">// recent matches</div>
+            <div class="match-list" id="match-list">
+                <div class="match-row">Loading...</div>
             </div>
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
 </body>
 </html>

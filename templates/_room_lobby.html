@@ -1,0 +1,75 @@
+<div class="room-panel" data-game="{{ game_name }}">
+    <div class="room-panel-top">
+        <div>
+            <div class="room-title">// realtime lobby</div>
+            <div class="room-code" id="room-code-display">NO ROOM</div>
+        </div>
+        <button class="room-copy" id="copy-room-button" type="button" disabled>COPY CODE</button>
+    </div>
+
+    <div class="room-grid">
+        <button class="room-action" id="create-room-button" type="button">
+            CREATE ROOM
+        </button>
+
+        <div style="display:flex; gap:.5rem;">
+            <input
+                class="room-field"
+                id="room-code-input"
+                maxlength="5"
+                placeholder="ROOM CODE"
+                autocomplete="off"
+            >
+            <button class="room-action" id="join-room-button" type="button">JOIN</button>
+        </div>
+
+        <div style="display:flex; gap:.5rem;">
+            <input
+                class="room-field"
+                id="challenge-login-input"
+                placeholder="GITHUB LOGIN"
+                autocomplete="off"
+            >
+            <button class="room-action" id="challenge-button" type="button">CHALLENGE</button>
+        </div>
+    </div>
+
+    <div class="room-players">
+        <div class="room-player" id="room-player-one">
+            <div>
+                <div class="room-player-name">Waiting...</div>
+                <div class="room-player-state">EMPTY SLOT</div>
+            </div>
+        </div>
+
+        <div class="room-vs">VS</div>
+
+        <div class="room-player right" id="room-player-two">
+            <div>
+                <div class="room-player-name">Waiting...</div>
+                <div class="room-player-state">EMPTY SLOT</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="room-footer">
+        <div class="room-status" id="room-status">
+            Create a room, join by code, or challenge a GitHub user.
+        </div>
+        <button class="room-ready" id="ready-button" type="button" disabled>
+            READY
+        </button>
+    </div>
+</div>
+
+<div class="challenge-modal" id="challenge-modal">
+    <div class="challenge-card">
+        <div class="room-title">// incoming challenge</div>
+        <h3 id="challenge-title">Challenge received</h3>
+        <p id="challenge-text"></p>
+        <div class="challenge-actions">
+            <button class="room-action" id="challenge-accept" type="button">ACCEPT</button>
+            <button class="secondary-button" id="challenge-decline" type="button">DECLINE</button>
+        </div>
+    </div>
+</div>

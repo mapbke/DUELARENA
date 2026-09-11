@@ -4,49 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DuoArena // Aim Duel</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/integration.css') }}">
 </head>
 <body>
+    <a href="{{ url_for('index') }}" class="nav-back">← BACK TO HUB</a>
 
-    <a href="index.html" class="nav-back">← BACK TO HUB</a>
-
-    <div class="container duel-container">
-        
-        <div class="header" style="margin-bottom: 1rem;">
-            <h1 style="font-size: 2rem;">Aim Duel</h1>
-        </div>
-
-        <!-- Позаимствуем сетку тайпинг-бокса под игровую зону -->
-        <div class="typing-box" style="height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-            
-            <!-- Пример того, как будет выглядеть фиолетовая неоновая мишень (твой друг её оживит) -->
-            <div style="
-                width: 30px; 
-                height: 30px; 
-                background: var(--accent-bright); 
-                border-radius: 50%; 
-                box-shadow: 0 0 20px var(--accent);
-                cursor: crosshair;
-                position: absolute;
-                top: 45%;
-                left: 52%;
-                transition: all 0.1s ease;
-            "></div>
-
-            <div style="font-family: var(--font-mono); color: var(--text-dim); pointer-events: none;">
-                // TARGET ZONE
-            </div>
-            
-        </div>
-
-        <div class="typing-stats-live" style="justify-content: center; gap: 4rem; margin: 0;">
-            <div class="stat-live-item">
-                <span>Targets Hit:</span>
-                <span>0 / 15</span>
+    <div class="user-status-bar">
+        <div class="user-chip">
+            <img src="{{ user.avatar_url }}" alt="">
+            <div class="user-chip-meta">
+                <strong>{{ user.login }}</strong>
+                <small>GITHUB CONNECTED</small>
             </div>
         </div>
-
+        <a class="auth-link" href="{{ url_for('logout') }}">LOGOUT</a>
     </div>
 
+    <div class="container duel-container">
+        <div class="header" style="margin-bottom:0;">
+            <h1 style="font-size:2rem;">AIM DUEL</h1>
+            <p>// 15 TARGETS / HIGHER TARGETS PER SECOND WINS</p>
+        </div>
+
+        {% set game_name = 'aim' %}
+        {% include '_room_lobby.html' %}
+
+        <div class="aim-zone game-disabled" id="aim-zone">
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                        color:var(--text-dim); font-family:var(--font-mono); pointer-events:none;"
+                 id="aim-placeholder">
+                READY UP TO START
+            </div>
+            <button class="aim-target" id="aim-target" hidden></button>
+        </div>
+
+        <div class="typing-stats-live" style="justify-content:center; margin:0;">
+            <div class="stat-live-item"><span>Targets:</span> <span id="aim-hits">0 / 15</span></div>
+            <div class="stat-live-item"><span>Score:</span> <span id="aim-score">0.00</span></div>
+        </div>
+        <div class="game-message" id="game-message"></div>
+    </div>
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/room.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/aim.js') }}"></script>
 </body>
 </html>

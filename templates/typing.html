@@ -1,41 +1,50 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DuoArena // Typing Duel</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/integration.css') }}">
 </head>
 <body>
+    <a href="{{ url_for('index') }}" class="nav-back">← BACK TO HUB</a>
 
-    <a href="index.html" class="nav-back">← BACK TO HUB</a>
-
-    <div class="container duel-container">
-        
-        <div class="header" style="margin-bottom: 1rem;">
-            <h1 style="font-size: 2rem;">Typing Speed Test</h1>
-        </div>
-
-        <div class="typing-box">
-            <div class="text-display">
-                <span class="correct">The</span> <span class="correct">only</span> <span class="correct">way</span> <span class="correct">to</span> <span class="current">do</span> great work is to love what you do. If you haven't found it yet, keep looking.
-            </div>
-
-            <input type="text" class="typing-input" placeholder="Начните вводить текст сюда..." autofocus>
-            
-            <div class="typing-stats-live">
-                <div class="stat-live-item">
-                    <span>Speed:</span>
-                    <span>74 WPM</span>
-                </div>
-                <div class="stat-live-item">
-                    <span>Accuracy:</span>
-                    <span>98%</span>
-                </div>
+    <div class="user-status-bar">
+        <div class="user-chip">
+            <img src="{{ user.avatar_url }}" alt="">
+            <div class="user-chip-meta">
+                <strong>{{ user.login }}</strong>
+                <small>GITHUB CONNECTED</small>
             </div>
         </div>
-
+        <a class="auth-link" href="{{ url_for('logout') }}">LOGOUT</a>
     </div>
 
+    <div class="container duel-container">
+        <div class="header" style="margin-bottom:0;">
+            <h1 style="font-size:2rem;">TYPING DUEL</h1>
+            <p>// HIGHER WPM WINS</p>
+        </div>
+
+        {% set game_name = 'typing' %}
+        {% include '_room_lobby.html' %}
+
+        <div class="typing-box">
+            <div class="text-display" id="typing-text"></div>
+            <input id="typing-input" type="text" class="typing-input"
+                   placeholder="Ready up first..." disabled autocomplete="off">
+
+            <div class="typing-stats-live">
+                <div class="stat-live-item"><span>Speed:</span> <span id="typing-wpm">0 WPM</span></div>
+                <div class="stat-live-item"><span>Accuracy:</span> <span id="typing-accuracy">100%</span></div>
+            </div>
+        </div>
+        <div class="game-message" id="game-message"></div>
+    </div>
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/room.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/typing.js') }}"></script>
 </body>
 </html>
