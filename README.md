@@ -1,95 +1,112 @@
-# DuoArena V4 — Global Rebrand
+# DuoArena V6
 
-Полный ребрендинг DuoArena.
+Полная пересборка frontend + backend.
 
-## V4
+## Главное
 
-- GitHub OAuth сохранён.
-- Добавлен Google OAuth.
-- Добавлен гостевой вход с ником.
-- Язык определяется автоматически по языку браузера:
-  - `ru*` → Русский;
-  - остальные → English.
-- В меню можно вручную переключать RU / EN.
-- Темы: System / Dark / Light.
-- Тема и язык сохраняются в `localStorage`.
-- Основной шрифт: Inter.
-- JetBrains Mono используется только для кодов, таймеров и чисел.
-- Полностью новый login screen, hub, lobby, profile menu и statistics UI.
-- Новая универсальная система пользователей: GitHub / Google / Guest.
-- История матчей хранит snapshot имени, аватара и провайдера — больше не зависит от JOIN к текущей таблице пользователей.
-- Старые GitHub-пользователи и матчи V3 мигрируются в V4 при старте.
+- Google / GitHub / Guest.
+- Авто RU/EN по языку браузера.
+- RU/EN можно переключать вручную.
+- Dark / Light / System.
+- Новый DuoArena icon + favicon + web manifest.
+- Manrope для интерфейса.
+- JetBrains Mono только для кодов, таймеров и игровых чисел.
+- Новый единый room flow:
+  `lobby -> countdown -> playing -> finished -> rematch`.
+- Серия побед внутри одной комнаты.
+- 15 секунд grace period для reconnect.
 
-## Render Environment
+## Ссылка-приглашение
 
-```text
-BASE_URL=https://duoarena.onrender.com
-SECRET_KEY=...
+После создания комнаты копируется ссылка:
 
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
+`https://duoarena.onrender.com/r/ABCDE`
 
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-```
+Если человек не вошёл:
+1. DuoArena отправит его на login.
+2. После Google / GitHub / Guest он вернётся на `/r/ABCDE`.
+3. Сервер определит режим комнаты.
+4. Откроется правильная игра.
+5. Клиент автоматически войдёт в комнату.
 
-## GitHub OAuth
+## Игровая логика
 
-Homepage:
+### Reaction
+- сигнал выбирает сервер;
+- сервер считает reaction time;
+- ранний клик = false start;
+- есть timeout.
 
-```text
-https://duoarena.onrender.com
-```
+### Typing
+- фраза выбирается сервером;
+- есть RU и EN phrase pools;
+- ошибки не блокируют завершение раунда;
+- сервер считает elapsed time, WPM и accuracy;
+- итоговый score = WPM * accuracy;
+- оба игрока видят progress;
+- paste отключён.
 
-Callback:
+### CPS
+- сервер открывает окно ровно на 10 секунд;
+- каждый клик отправляется на сервер;
+- итоговый count считает сервер.
 
-```text
-https://duoarena.onrender.com/auth/github/callback
-```
+### Aim
+- сервер генерирует одну последовательность из 15 целей;
+- оба игрока получают одинаковые координаты;
+- сервер проверяет порядок hit index;
+- pace считается сервером.
 
-## Google OAuth
-
-В Google Cloud Console создай **OAuth 2.0 Client ID → Web application**.
-
-Authorized JavaScript origin:
-
-```text
-https://duoarena.onrender.com
-```
-
-Authorized redirect URI:
-
-```text
-https://duoarena.onrender.com/auth/google/callback
-```
-
-После этого добавь `GOOGLE_CLIENT_ID` и `GOOGLE_CLIENT_SECRET` в Render → Environment.
+### Blind Timing
+- начало раунда фиксирует сервер;
+- сервер считает отклонение от 5.000 секунд.
 
 ## Render
 
-Build command:
+Build:
 
-```bash
-pip install -r requirements.txt
-```
+`pip install -r requirements.txt`
 
-Start command:
+Start:
 
-```bash
-gunicorn -w 1 --threads 100 --bind 0.0.0.0:$PORT app:app
-```
+`gunicorn -w 1 --threads 100 --bind 0.0.0.0:$PORT app:app`
+
+OAuth callbacks:
+
+GitHub:
+`https://duoarena.onrender.com/auth/github/callback`
+
+Google:
+`https://duoarena.onrender.com/auth/google/callback`
 
 ## Deploy
 
-Распакуй архив в корень репозитория с заменой файлов:
+Полностью заменить текущий проект содержимым архива.
 
 ```bash
 git add .
-git commit -m "DuoArena V4 global rebrand"
+git commit -m "DuoArena V6 complete rebuild"
 git push origin main
 ```
 
 ## Render Free
 
-Комнаты живут в RAM, поэтому после рестарта процесса активные комнаты исчезают.
-SQLite на free Render также не является постоянным хранилищем. Для полноценного публичного запуска лучше следующим этапом перенести данные в Postgres.
+Активные комнаты пока хранятся в RAM и исчезают после рестарта инстанса.
+SQLite также не является постоянным хранилищем без persistent disk.
+
+Если проект пойдёт в публичный запуск, следующий инфраструктурный шаг — Postgres + Redis.
+
+## QA перед упаковкой
+
+Проверено автоматически:
+
+- Python syntax compile;
+- все Jinja templates парсятся;
+- весь JavaScript проходит `node --check`;
+- все `getElementById()` указывают на реально существующие элементы;
+- все клиентские `socket.emit()` имеют backend handler;
+- invite flow `/r/<code>` сохраняет `next` через login и ведёт в правильный mode;
+- favicon SVG + PNG 192/512 присутствуют;
+- минимальный явный `font-size` в UI — 10px, основной body — 16px.
+
+Runtime integration test в среде сборки не запускается, потому что в ней нет установленных Flask/Flask-SocketIO packages. На Render они устанавливаются из `requirements.txt`.

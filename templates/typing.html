@@ -1,32 +1,42 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Typing Duel{% endblock %}
-
 {% block content %}
-<main class="page game-page">
+<main class="shell game-layout">
     <a class="back-link" href="{{ url_for('index') }}">
         <span>←</span>
         <span data-i18n="nav.back">Back to hub</span>
     </a>
 
-    <section class="game-heading">
-        <span class="section-kicker" data-i18n="mode.typing.tag">PRIVATE DUEL</span>
+    <section class="game-title">
+        <span class="eyebrow" data-i18n="mode.typing.tag">TYPING</span>
         <h1 data-i18n="mode.typing.name">Typing Duel</h1>
     </section>
 
-    {% set game = 'typing' %}
-    {% include "_lobby.html" %}
+    {% set mode = "typing" %}
+    {% include "_room.html" %}
 
-    <section class="game-stage locked" id="game-stage">
-        <div class="stage-lock" id="stage-lock"><strong data-i18n="stage.locked">Connect to a room first</strong><span data-i18n="stage.lockedHint">The game unlocks when both players are ready.</span></div>
-        <div class="typing-text" id="typing-text"></div>
-        <textarea id="typing-input" rows="4" disabled data-i18n-placeholder="typing.placeholder" placeholder="Round has not started"></textarea>
-        <div class="live-stats"><div><span data-i18n="typing.speed">Speed</span><strong id="typing-wpm">0 WPM</strong></div><div><span data-i18n="typing.accuracy">Accuracy</span><strong id="typing-accuracy">100%</strong></div></div>
-        <div class="game-message" id="game-message"></div>
-    </section>
+    
+<section class="game-surface locked" id="game-surface">
+    <div class="surface-lock" id="surface-lock">
+        <strong data-i18n="game.locked">Join a room to start</strong>
+        <span data-i18n="game.lockedHint">The game starts when both players are ready.</span>
+    </div>
+    <div class="typing-progress-board" id="typing-progress-board"></div>
+    <div class="typing-target" id="typing-target"></div>
+    <textarea id="typing-input" rows="4" disabled autocomplete="off" autocapitalize="off" spellcheck="false"
+              data-i18n-placeholder="typing.placeholder" placeholder="Wait for the round"></textarea>
+    <div class="metric-row">
+        <div><span>WPM</span><strong id="typing-wpm">0</strong></div>
+        <div><span data-i18n="typing.accuracy">Accuracy</span><strong id="typing-accuracy">100%</strong></div>
+        <div><span data-i18n="typing.progress">Progress</span><strong id="typing-progress">0%</strong></div>
+    </div>
+    <p class="game-feedback" id="game-feedback"></p>
+</section>
+
 </main>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+<script src="{{ url_for('static', filename='js/room.js') }}"></script>
 <script src="{{ url_for('static', filename='js/typing.js') }}"></script>
 {% endblock %}

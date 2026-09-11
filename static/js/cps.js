@@ -1,9 +1,72 @@
 (() => {
-    const socket=window.socket,t=k=>window.DuoUI?.t(k)||k,button=document.getElementById("cps-button"),time=document.getElementById("cps-time"),clicksNode=document.getElementById("cps-clicks"),rate=document.getElementById("cps-rate");
-    const duration=10000;let token=null,active=false,clicks=0,start=0,raf=null;
-    function reset(){token=null;active=false;clicks=0;start=0;button.disabled=true;button.textContent=t("cps.waiting");time.textContent="10.0";clicksNode.textContent="0";rate.textContent="0.0";if(raf)cancelAnimationFrame(raf);}
-    function finish(){if(!active)return;active=false;button.disabled=true;button.textContent=t("cps.sent");socket.emit("submit_score",{round_token:token,score:clicks});}
-    function tick(){if(!active)return;const elapsed=performance.now()-start,left=Math.max(0,duration-elapsed);time.textContent=(left/1000).toFixed(1);rate.textContent=(clicks/Math.max(elapsed/1000,.001)).toFixed(1);if(left<=0)return finish();raf=requestAnimationFrame(tick);}
-    window.addEventListener("duo:round-start",e=>{reset();token=e.detail.round_token;active=true;start=performance.now();button.disabled=false;button.textContent=t("cps.click");raf=requestAnimationFrame(tick);});
-    button.addEventListener("pointerdown",e=>{if(!active)return;e.preventDefault();clicks++;clicksNode.textContent=String(clicks);});window.addEventListener("duo:round-result",()=>token=null);window.addEventListener("duo:language-changed",()=>{if(!active)button.textContent=t("cps.waiting");});reset();
+    const socket = window.socket;
+    const t = key => window.DuoUI?.t(key) || key;
+
+    const timeNode = document.getElementById("cps-time");
+    const zone = document.getElementById("cps-zone");
+    const main = document.getElementById("cps-main");
+    const countBig = document.getElementById("cps-count");
+    const clicksNode = document.getElementById("cps-clicks");
+    const rateNode = document.getElementById("cps-rate");
+
+    let token = null;
+    let startedAt = 0;
+    let duration = 10;
+    let clicks = 0;
+    let active = false;
+    let raf = null;
+
+    function tick() {
+        if (!active) return;
+
+        const elapsed = (performance.now() - startedAt) / 1000;
+        const left = Math.max(0, duration - elapsed);
+
+        timeNode.textContent = left.toFixed(1);
+        rateNode.textContent = (clicks / Math.max(elapsed,.001)).toFixed(1);
+
+        if (left <= 0) {
+            active = false;
+            zone.disabled = true;
+            main.textContent = t("reaction.sent");
+            return;
+        }
+
+        raf = requestAnimationFrame(tick);
+    }
+
+    window.addEventListener("duo:round-start", event => {
+        token = event.detail.token;
+        duration = Number(event.detail.duration || 10);
+        startedAt = performance.now();
+        clicks = 0;
+        active = true;
+
+        timeNode.textContent = duration.toFixed(1);
+        countBig.textContent = "0";
+        clicksNode.textContent = "0";
+        rateNode.textContent = "0.0";
+        zone.disabled = false;
+        main.textContent = t("cps.click");
+
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(tick);
+    });
+
+    zone.addEventListener("pointerdown", event => {
+        if (!active || !token) return;
+
+        event.preventDefault();
+        clicks++;
+        countBig.textContent = clicks;
+        clicksNode.textContent = clicks;
+        socket.emit("cps_click",{token});
+    });
+
+    window.addEventListener("duo:round-result", () => {
+        token = null;
+        active = false;
+        zone.disabled = true;
+        if (raf) cancelAnimationFrame(raf);
+    });
 })();

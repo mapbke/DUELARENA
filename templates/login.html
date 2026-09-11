@@ -1,70 +1,52 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Sign in{% endblock %}
-
 {% block content %}
-<main class="login-page">
-    <section class="login-hero">
-        <div class="hero-badge">
-            <span class="hero-badge-dot"></span>
-            <span data-i18n="login.kicker">PRIVATE 1V1 BROWSER GAMES</span>
-        </div>
-
+<main class="shell auth-layout">
+    <section class="auth-hero">
+        <span class="pill-title" data-i18n="login.kicker">PRIVATE 1V1 BROWSER GAMES</span>
         <h1>
-            <span data-i18n="login.title1">Play your friend.</span>
-            <em data-i18n="login.title2">Settle it instantly.</em>
+            <span data-i18n="login.title1">Challenge a friend.</span>
+            <em data-i18n="login.title2">Prove the result.</em>
         </h1>
+        <p data-i18n="login.description">Five fast competitive modes, private rooms and instant rematches.</p>
 
-        <p data-i18n="login.description">
-            Create a private room, share the code and compete in reaction, typing, CPS, aim and timing games.
-        </p>
-
-        <div class="login-feature-row">
+        <div class="feature-chips">
             <span data-i18n="login.point1">No installation</span>
-            <span data-i18n="login.point2">Private rooms</span>
-            <span data-i18n="login.point3">Instant rematches</span>
+            <span data-i18n="login.point2">Private invite links</span>
+            <span data-i18n="login.point3">Server-controlled rounds</span>
         </div>
     </section>
 
-    <section class="auth-panel">
-        <div class="auth-panel-head">
-            <span class="auth-logo">D</span>
+    <section class="auth-card">
+        <div class="auth-title">
+            <img src="{{ url_for('static', filename='icons/favicon.svg') }}" alt="">
             <div>
                 <h2 data-i18n="login.welcome">Welcome to DuoArena</h2>
                 <p data-i18n="login.choose">Choose how you want to continue.</p>
             </div>
         </div>
 
-        <div class="auth-stack">
+        <div class="auth-providers">
             {% if google_enabled %}
-            <a class="auth-provider" href="{{ url_for('login_google', next=next_path) }}">
-                <span class="provider-icon google-icon">G</span>
+            <a href="{{ url_for('login_google', next=next_path) }}" class="provider-button">
+                <span class="provider-badge google">G</span>
                 <span data-i18n="login.google">Continue with Google</span>
                 <b>→</b>
             </a>
-            {% else %}
-            <button class="auth-provider disabled" type="button" disabled>
-                <span class="provider-icon google-icon">G</span>
-                <span data-i18n="login.googleUnavailable">Google is not configured</span>
-            </button>
             {% endif %}
 
             {% if github_enabled %}
-            <a class="auth-provider" href="{{ url_for('login_github', next=next_path) }}">
-                <span class="provider-icon github-icon">GH</span>
+            <a href="{{ url_for('login_github', next=next_path) }}" class="provider-button">
+                <span class="provider-badge github">GH</span>
                 <span data-i18n="login.github">Continue with GitHub</span>
                 <b>→</b>
             </a>
-            {% else %}
-            <button class="auth-provider disabled" type="button" disabled>
-                <span class="provider-icon github-icon">GH</span>
-                <span data-i18n="login.githubUnavailable">GitHub is not configured</span>
-            </button>
             {% endif %}
         </div>
 
-        <div class="auth-divider"><span data-i18n="login.or">or</span></div>
+        <div class="or-line"><span data-i18n="login.or">or</span></div>
 
-        <form class="guest-form" action="{{ url_for('login_guest') }}" method="post">
+        <form action="{{ url_for('login_guest') }}" method="post" class="guest-form">
             <input type="hidden" name="next" value="{{ next_path }}">
             <label for="guest-name" data-i18n="login.guestName">Guest name</label>
             <div class="guest-row">
@@ -76,16 +58,14 @@
                     data-i18n-placeholder="login.guestPlaceholder"
                     placeholder="Your nickname"
                 >
-                <button class="guest-button" type="submit">
+                <button type="submit">
                     <span data-i18n="login.guest">Play as Guest</span>
                     <b>→</b>
                 </button>
             </div>
         </form>
 
-        <p class="auth-note" data-i18n="login.guestNote">
-            Guest progress is tied to this browser session. Use Google or GitHub to keep a stable identity.
-        </p>
+        <p class="auth-note" data-i18n="login.guestNote">Use Google or GitHub for a stable identity and persistent stats.</p>
     </section>
 </main>
 {% endblock %}

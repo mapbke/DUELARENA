@@ -1,73 +1,37 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Statistics{% endblock %}
-
 {% block content %}
-<main class="page stats-page">
-    <a class="back-link" href="{{ url_for('index') }}">
-        <span>←</span>
-        <span data-i18n="nav.back">Back to hub</span>
-    </a>
+<main class="shell stats-layout">
+    <a class="back-link" href="{{ url_for('index') }}"><span>←</span><span data-i18n="nav.back">Back to hub</span></a>
 
-    <section class="stats-heading">
-        <span class="section-kicker" data-i18n="stats.global">GLOBAL STATS</span>
+    <section class="stats-title">
+        <span class="eyebrow" data-i18n="stats.global">GLOBAL STATS</span>
         <h1 data-i18n="nav.stats">Statistics</h1>
-        <p data-i18n="stats.description">Recent duels, leaderboard and player records.</p>
+        <p data-i18n="stats.description">Leaderboard and recent completed rounds.</p>
     </section>
 
     <section class="stats-summary">
-        <article>
-            <span data-i18n="stats.players">Players</span>
-            <strong id="summary-players">—</strong>
-        </article>
-        <article>
-            <span data-i18n="stats.matches">Matches</span>
-            <strong id="summary-matches">—</strong>
-        </article>
-        <article class="top-player-card">
-            <span data-i18n="stats.topPlayer">Top player</span>
-            <strong id="summary-top">—</strong>
-            <small id="summary-top-sub"></small>
-        </article>
+        <article><small data-i18n="stats.players">Players</small><strong id="summary-players">—</strong></article>
+        <article><small data-i18n="stats.matches">Matches</small><strong id="summary-matches">—</strong></article>
+        <article class="top"><small data-i18n="stats.topPlayer">Top player</small><strong id="summary-top">—</strong><span id="summary-top-sub"></span></article>
     </section>
 
-    <section class="data-panel">
-        <div class="panel-heading">
-            <div>
-                <span class="section-kicker" data-i18n="stats.ranking">RANKING</span>
-                <h2 data-i18n="stats.leaderboard">Leaderboard</h2>
-            </div>
-        </div>
+    <section class="stats-panel">
+        <div class="panel-title"><span class="eyebrow" data-i18n="stats.ranking">RANKING</span><h2 data-i18n="stats.leaderboard">Leaderboard</h2></div>
         <div class="table-wrap">
-            <table class="stats-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th data-i18n="stats.player">Player</th>
-                        <th data-i18n="stats.matches">Matches</th>
-                        <th>W</th>
-                        <th>L</th>
-                        <th>WR</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboard-body">
-                    <tr><td colspan="6">...</td></tr>
-                </tbody>
+            <table>
+                <thead><tr><th>#</th><th data-i18n="stats.player">Player</th><th data-i18n="stats.matches">Matches</th><th>W</th><th>L</th><th>WR</th></tr></thead>
+                <tbody id="leaderboard-body"></tbody>
             </table>
         </div>
     </section>
 
-    <section class="data-panel">
-        <div class="panel-heading">
-            <div>
-                <span class="section-kicker" data-i18n="stats.history">HISTORY</span>
-                <h2 data-i18n="stats.recent">Recent matches</h2>
-            </div>
-        </div>
-        <div class="match-list" id="match-list"></div>
+    <section class="stats-panel">
+        <div class="panel-title"><span class="eyebrow" data-i18n="stats.history">HISTORY</span><h2 data-i18n="stats.recent">Recent matches</h2></div>
+        <div class="history-list" id="history-list"></div>
     </section>
 </main>
 {% endblock %}
-
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
 {% endblock %}

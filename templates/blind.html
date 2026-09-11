@@ -1,33 +1,36 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Blind Timing{% endblock %}
-
 {% block content %}
-<main class="page game-page">
+<main class="shell game-layout">
     <a class="back-link" href="{{ url_for('index') }}">
         <span>←</span>
         <span data-i18n="nav.back">Back to hub</span>
     </a>
 
-    <section class="game-heading">
-        <span class="section-kicker" data-i18n="mode.blind.tag">PRIVATE DUEL</span>
+    <section class="game-title">
+        <span class="eyebrow" data-i18n="mode.blind.tag">BLIND</span>
         <h1 data-i18n="mode.blind.name">Blind Timing</h1>
     </section>
 
-    {% set game = 'blind' %}
-    {% include "_lobby.html" %}
+    {% set mode = "blind" %}
+    {% include "_room.html" %}
 
-    <section class="game-stage locked" id="game-stage">
-        <div class="stage-lock" id="stage-lock"><strong data-i18n="stage.locked">Connect to a room first</strong><span data-i18n="stage.lockedHint">The game unlocks when both players are ready.</span></div>
-        <div class="blind-target"><span data-i18n="blind.target">TARGET</span><strong>5.000s</strong></div>
-        <div class="blind-display" id="blind-display">WAITING</div>
-        <button class="click-pad compact" id="blind-stop" type="button" disabled data-i18n="blind.waiting">WAITING</button>
-        <div class="live-stats"><div><span data-i18n="blind.result">Result</span><strong id="blind-result">—</strong></div><div><span data-i18n="blind.error">Error</span><strong id="blind-difference">—</strong></div></div>
-        <div class="game-message" id="game-message"></div>
-    </section>
+    
+<section class="game-surface locked" id="game-surface">
+    <div class="surface-lock" id="surface-lock">
+        <strong data-i18n="game.locked">Join a room to start</strong>
+        <span data-i18n="game.lockedHint">The game starts when both players are ready.</span>
+    </div>
+    <div class="blind-goal"><span data-i18n="blind.goal">TARGET</span><strong>5.000s</strong></div>
+    <div class="blind-clock" id="blind-clock">—</div>
+    <button class="blind-stop" id="blind-stop" type="button" disabled data-i18n="blind.waiting">WAITING</button>
+    <p class="game-feedback" id="game-feedback"></p>
+</section>
+
 </main>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+<script src="{{ url_for('static', filename='js/room.js') }}"></script>
 <script src="{{ url_for('static', filename='js/blind.js') }}"></script>
 {% endblock %}

@@ -1,31 +1,42 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Reaction Duel{% endblock %}
-
 {% block content %}
-<main class="page game-page">
+<main class="shell game-layout">
     <a class="back-link" href="{{ url_for('index') }}">
         <span>←</span>
         <span data-i18n="nav.back">Back to hub</span>
     </a>
 
-    <section class="game-heading">
-        <span class="section-kicker" data-i18n="mode.reaction.tag">PRIVATE DUEL</span>
+    <section class="game-title">
+        <span class="eyebrow" data-i18n="mode.reaction.tag">REACTION</span>
         <h1 data-i18n="mode.reaction.name">Reaction Duel</h1>
     </section>
 
-    {% set game = 'reaction' %}
-    {% include "_lobby.html" %}
+    {% set mode = "reaction" %}
+    {% include "_room.html" %}
 
-    <section class="game-stage locked" id="game-stage">
-        <div class="stage-lock" id="stage-lock"><strong data-i18n="stage.locked">Connect to a room first</strong><span data-i18n="stage.lockedHint">The game unlocks when both players are ready.</span></div>
-        <div class="reaction-scoreboard"><div><small id="reaction-name-left">PLAYER 1</small><strong id="reaction-score-left">—</strong></div><span>VS</span><div><small id="reaction-name-right">PLAYER 2</small><strong id="reaction-score-right">—</strong></div></div>
-        <button class="reaction-pad" id="reaction-pad" type="button" disabled><strong id="reaction-status" data-i18n="reaction.waitingRound">WAITING FOR ROUND</strong><span id="reaction-substatus" data-i18n="reaction.dontClick">Don't click before green.</span></button>
-        <div class="game-message" id="game-message"></div>
-    </section>
+    
+<section class="game-surface locked" id="game-surface">
+    <div class="surface-lock" id="surface-lock">
+        <strong data-i18n="game.locked">Join a room to start</strong>
+        <span data-i18n="game.lockedHint">The game starts when both players are ready.</span>
+    </div>
+    <div class="duel-score">
+        <div><small id="reaction-name-a">PLAYER 1</small><strong id="reaction-score-a">—</strong></div>
+        <span>VS</span>
+        <div><small id="reaction-name-b">PLAYER 2</small><strong id="reaction-score-b">—</strong></div>
+    </div>
+    <button class="reaction-zone" id="reaction-zone" type="button" disabled>
+        <strong id="reaction-main" data-i18n="reaction.waiting">WAITING</strong>
+        <span id="reaction-sub" data-i18n="reaction.hint">Do not click before green.</span>
+    </button>
+    <p class="game-feedback" id="game-feedback"></p>
+</section>
+
 </main>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+<script src="{{ url_for('static', filename='js/room.js') }}"></script>
 <script src="{{ url_for('static', filename='js/reaction.js') }}"></script>
 {% endblock %}

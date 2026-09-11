@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}DuoArena // Room expired{% endblock %}
+{% block content %}
+<main class="shell missing-room">
+    <img src="{{ url_for('static', filename='icons/favicon.svg') }}" alt="">
+    <span class="eyebrow">ROOM {{ room_code }}</span>
+    <h1 data-i18n="missing.title">This room no longer exists.</h1>
+    <p data-i18n="missing.text">The host may have left or the server may have restarted.</p>
+    <a href="{{ url_for('index') }}" data-i18n="missing.home">Back to DuoArena</a>
+</main>
+{% endblock %}

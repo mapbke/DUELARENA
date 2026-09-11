@@ -1,0 +1,77 @@
+<section class="room-panel" data-mode="{{ mode }}">
+    <div class="room-panel-head">
+        <div>
+            <span class="eyebrow" data-i18n="room.eyebrow">PRIVATE ROOM</span>
+            <h2 id="room-title" data-i18n="room.title">Create a room or join by code</h2>
+        </div>
+        <div class="room-code-chip hidden" id="room-code-chip">
+            <span data-i18n="room.code">Code</span>
+            <strong id="room-code-top">-----</strong>
+        </div>
+    </div>
+
+    <div class="room-entry" id="room-entry">
+        <button class="create-room" id="create-room" type="button">
+            <span>+</span>
+            <div>
+                <strong data-i18n="room.create">Create room</strong>
+                <small data-i18n="room.createHint">You will get an invite link and a room code.</small>
+            </div>
+            <b>→</b>
+        </button>
+
+        <div class="or-line"><span data-i18n="room.or">or join by code</span></div>
+
+        <div class="join-row">
+            <input id="room-input" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ABCDE">
+            <button id="join-room" type="button" data-i18n="room.join">Join room</button>
+        </div>
+    </div>
+
+    <div class="room-active hidden" id="room-active">
+        <div class="invite-bar">
+            <div>
+                <small data-i18n="room.invite">Invite</small>
+                <strong id="invite-text">duoarena.onrender.com/r/-----</strong>
+            </div>
+            <div>
+                <button id="copy-invite" type="button" data-i18n="room.copyLink">Copy invite link</button>
+                <button id="leave-room" class="danger-button" type="button" data-i18n="room.leave">Leave</button>
+            </div>
+        </div>
+
+        <div class="players">
+            <article class="player-card" id="player-a"></article>
+            <div class="versus">VS</div>
+            <article class="player-card right" id="player-b"></article>
+        </div>
+
+        <div class="room-status-bar">
+            <div>
+                <small>STATUS</small>
+                <strong id="room-status" data-i18n="room.waiting">Waiting for opponent.</strong>
+            </div>
+            <button class="ready-button hidden" id="ready-button" type="button" data-i18n="room.ready">I'm ready</button>
+        </div>
+    </div>
+</section>
+
+<div class="countdown-overlay hidden" id="countdown-overlay">
+    <div>
+        <span data-i18n="round.getReady">GET READY</span>
+        <strong id="countdown-value">3</strong>
+    </div>
+</div>
+
+<div class="result-overlay hidden" id="result-overlay">
+    <section class="result-card" id="result-card">
+        <button id="result-close" class="result-close" type="button">×</button>
+        <small id="result-kicker">ROUND COMPLETE</small>
+        <h2 id="result-title">VICTORY</h2>
+        <div class="result-versus" id="result-versus"></div>
+        <div class="result-actions">
+            <button id="rematch-button" type="button" data-i18n="result.rematch">Ready for rematch</button>
+            <a href="{{ url_for('index') }}" data-i18n="result.home">Back to hub</a>
+        </div>
+    </section>
+</div>
