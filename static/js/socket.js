@@ -1,7 +1,7 @@
 ﻿const socket = io();
 
 socket.on("connect", () => {
-    console.log("[Socket.IO] Connected:", socket.id);
+    console.log(`[Socket.IO] Connected: ${socket.id}`);
 });
 
 socket.on("disconnect", () => {
