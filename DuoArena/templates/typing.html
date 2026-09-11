@@ -3,26 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Typing Duel</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
+    <title>DuoArena // Typing Duel</title>
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
-
 <body>
 
-    <main class="container">
+    <a href="index.html" class="nav-back">← BACK TO HUB</a>
 
-        <a href="/" class="back">← DuoArena</a>
-
-        <h1>Typing Duel</h1>
-
-        <div class="placeholder">
-            Режим пока в разработке.
+    <div class="container duel-container">
+        
+        <div class="header" style="margin-bottom: 1rem;">
+            <h1 style="font-size: 2rem;">Typing Speed Test</h1>
         </div>
 
-    </main>
+        <div class="typing-box">
+            <div class="text-display">
+                <span class="correct">The</span> <span class="correct">only</span> <span class="correct">way</span> <span class="correct">to</span> <span class="current">do</span> great work is to love what you do. If you haven't found it yet, keep looking.
+            </div>
+
+            <input type="text" class="typing-input" placeholder="Начните вводить текст сюда..." autofocus>
+            
+            <div class="typing-stats-live">
+                <div class="stat-live-item">
+                    <span>Speed:</span>
+                    <span>74 WPM</span>
+                </div>
+                <div class="stat-live-item">
+                    <span>Accuracy:</span>
+                    <span>98%</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
 
 </body>
 </html>

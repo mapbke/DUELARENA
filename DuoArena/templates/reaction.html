@@ -3,53 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Reaction Duel</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
-
-    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <title>DuoArena // Reaction Duel</title>
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
-
 <body>
 
-    <main class="container">
+    <a href="index.html" class="nav-back">← BACK TO HUB</a>
 
-        <a href="/" class="back">← DuoArena</a>
-
-        <h1>Reaction Duel</h1>
-
-        <div class="score">
-            <div>
-                <span>NIKITA</span>
-                <strong id="score-nikita">0</strong>
+    <div class="container duel-container">
+        
+        <!-- Табло счета -->
+        <div class="scoreboard">
+            <div class="player-score left">
+                <div class="player-name">NIKITA</div>
+                <div class="score-number">0</div>
             </div>
-
-            <span class="score-divider">:</span>
-
-            <div>
-                <span>GLEB</span>
-                <strong id="score-gleb">0</strong>
+            <div class="score-divider">:</div>
+            <div class="player-score right">
+                <div class="player-name">GLEB</div>
+                <div class="score-number">0</div>
             </div>
         </div>
 
-        <div id="reaction-area" class="reaction-area">
-            WAITING
+        <!-- Игровая интерактивная зона -->
+        <div class="reaction-zone waiting">
+            <div class="zone-status">WAITING...</div>
+            <button class="btn-ready">Ready</button>
         </div>
 
-        <button id="ready-button" class="button">
-            READY
-        </button>
+        <!-- Рекорды -->
+        <div class="records-box">
+            <div class="records-title">// Best reaction</div>
+            <div class="record-line">
+                <span>Nikita:</span>
+                <span>173 ms</span>
+            </div>
+            <div class="record-line">
+                <span>Gleb:</span>
+                <span>168 ms</span>
+            </div>
+        </div>
 
-        <p id="status">
-            Waiting for players...
-        </p>
-
-    </main>
-
-    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/reaction.js') }}"></script>
+    </div>
 
 </body>
 </html>

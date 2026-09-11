@@ -3,45 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>DuoArena</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
+    <title>DuoArena // Hub</title>
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
-
 <body>
 
-    <main class="container">
+    <!-- Панель статусов под Глеба и Никиту -->
+    <div class="user-status-bar">
+        <div>GLEB (YOU): <span class="status-dot online"></span></div>
+        <div class="friend-status">NIKITA: <span class="status-dot offline"></span></div>
+    </div>
 
-        <div class="logo">
-            DUO<span>ARENA</span>
+    <div class="container">
+        <header class="header">
+            <h1>DUOARENA</h1>
+            <p>// PRIVATE BATTLEGROUND</p>
+        </header>
+
+        <main class="grid">
+            <!-- 01. Reaction Duel -->
+            <div class="card" style="cursor: default;">
+                <a href="reaction.html" style="text-decoration: none; color: inherit;">
+                    <div class="card-tag">01. Speed</div>
+                    <div class="card-title">Reaction Duel</div>
+                    <div class="card-desc">Кто быстрее кликнет при изменении цвета экрана. Чистая реакция.</div>
+                </a>
+                <button class="btn-challenge" onclick="sendChallenge(this, 'Reaction Duel')">CHALLENGE NIKITA</button>
+            </div>
+
+            <!-- 02. Typing Duel -->
+            <div class="card" style="cursor: default;">
+                <a href="typing.html" style="text-decoration: none; color: inherit;">
+                    <div class="card-tag">02. Focus</div>
+                    <div class="card-title">Typing Duel</div>
+                    <div class="card-desc">Битва на скорость набора текста. Проверяет точность и количество слов в минуту.</div>
+                </a>
+                <button class="btn-challenge" onclick="sendChallenge(this, 'Typing Duel')">CHALLENGE NIKITA</button>
+            </div>
+
+            <!-- 03. CPS Battle -->
+            <div class="card" style="cursor: default;">
+                <a href="cps.html" style="text-decoration: none; color: inherit;">
+                    <div class="card-tag">03. Clicks</div>
+                    <div class="card-title">CPS Battle</div>
+                    <div class="card-desc">Тест на количество кликов в секунду за ограниченный промежуток времени. Пощадите мышь.</div>
+                </a>
+                <button class="btn-challenge" onclick="sendChallenge(this, 'CPS Battle')">CHALLENGE NIKITA</button>
+            </div>
+
+            <!-- 04. Aim Duel (НОВЫЙ) -->
+            <div class="card" style="cursor: default;">
+                <a href="aim.html" style="text-decoration: none; color: inherit;">
+                    <div class="card-tag">04. Aim</div>
+                    <div class="card-title">Aim Duel</div>
+                    <div class="card-desc">Появление мишеней в случайных местах экрана. Битва на скорость и точность клика.</div>
+                </a>
+                <button class="btn-challenge" onclick="sendChallenge(this, 'Aim Duel')">CHALLENGE NIKITA</button>
+            </div>
+
+            <!-- 05. Blind Timing (НОВЫЙ) -->
+            <div class="card" style="cursor: default;">
+                <a href="blind.html" style="text-decoration: none; color: inherit;">
+                    <div class="card-tag">05. Timing</div>
+                    <div class="card-title">Blind Timing</div>
+                    <div class="card-desc">Останови таймер вслепую ровно на 5.000 секундах. Проверь внутренние часы.</div>
+                </a>
+                <button class="btn-challenge" onclick="sendChallenge(this, 'Blind Timing')">CHALLENGE NIKITA</button>
+            </div>
+
+            <!-- Statistics -->
+            <a href="stats.html" class="card stats-card">
+                <div>
+                    <div class="card-tag">Global</div>
+                    <div class="card-title" style="margin: 0;">View Full Statistics</div>
+                </div>
+                <div class="card-arrow" style="margin: 0;">→</div>
+            </a>
+        </main>
+    </div>
+
+    <!-- Всплывающее окно вызова (Toast) -->
+    <div class="challenge-toast" id="challengeToast">
+        <div class="challenge-toast-title">// INCOMING CHALLENGE</div>
+        <div class="challenge-toast-text">Никита принимает вызов и ждет тебя в <span id="gameName" style="color: var(--accent-bright);">Reaction Duel</span>!</div>
+        <div class="challenge-toast-actions">
+            <button class="btn-toast accept" onclick="closeToast()">ACCEPT</button>
+            <button class="btn-toast decline" onclick="closeToast()">DECLINE</button>
         </div>
+    </div>
 
-        <p class="subtitle">
-            private 1v1 arena
-        </p>
+    <!-- ДЕМО-СКРИПТ ДЛЯ ПРОВЕРКИ ИНТЕРФЕЙСА -->
+    <script>
+        function sendChallenge(button, gameName) {
+            if (button.classList.contains('sending')) return;
 
-        <div class="games">
+            button.classList.add('sending');
+            button.innerText = 'SENDING...';
 
-            <a href="/reaction" class="game-card">
-                <h2>Reaction Duel</h2>
-                <p>Кто быстрее нажмёт после сигнала.</p>
-            </a>
+            setTimeout(() => {
+                document.getElementById('gameName').innerText = gameName;
+                document.getElementById('challengeToast').classList.add('show');
+                
+                button.classList.remove('sending');
+                button.innerText = 'CHALLENGE NIKITA';
+            }, 1200);
+        }
 
-            <a href="/typing" class="game-card">
-                <h2>Typing Duel</h2>
-                <p>Кто быстрее напечатает текст.</p>
-            </a>
-
-            <a href="/stats" class="game-card">
-                <h2>Statistics</h2>
-                <p>Победы, поражения и рекорды.</p>
-            </a>
-
-        </div>
-
-    </main>
+        function closeToast() {
+            document.getElementById('challengeToast').classList.remove('show');
+        }
+    </script>
 
 </body>
 </html>

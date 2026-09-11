@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuoArena // Aim Duel</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+
+    <a href="index.html" class="nav-back">← BACK TO HUB</a>
+
+    <div class="container duel-container">
+        
+        <div class="header" style="margin-bottom: 1rem;">
+            <h1 style="font-size: 2rem;">Aim Duel</h1>
+        </div>
+
+        <!-- Позаимствуем сетку тайпинг-бокса под игровую зону -->
+        <div class="typing-box" style="height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            
+            <!-- Пример того, как будет выглядеть фиолетовая неоновая мишень (твой друг её оживит) -->
+            <div style="
+                width: 30px; 
+                height: 30px; 
+                background: var(--accent-bright); 
+                border-radius: 50%; 
+                box-shadow: 0 0 20px var(--accent);
+                cursor: crosshair;
+                position: absolute;
+                top: 45%;
+                left: 52%;
+                transition: all 0.1s ease;
+            "></div>
+
+            <div style="font-family: var(--font-mono); color: var(--text-dim); pointer-events: none;">
+                // TARGET ZONE
+            </div>
+            
+        </div>
+
+        <div class="typing-stats-live" style="justify-content: center; gap: 4rem; margin: 0;">
+            <div class="stat-live-item">
+                <span>Targets Hit:</span>
+                <span>0 / 15</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
