@@ -1,10 +1,21 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Aim Duel{% endblock %}
+
 {% block content %}
 <main class="page game-page">
-    <a class="back-link" href="{{ url_for('index') }}"><span>←</span><span data-i18n="nav.back">Back to hub</span></a>
-    <section class="game-heading"><span class="eyebrow" data-i18n="mode.aim.tag">AIM</span><h1 data-i18n="mode.aim.name">Aim Duel</h1></section>
-    {% set game = 'aim' %}{% include "_lobby.html" %}
+    <a class="back-link" href="{{ url_for('index') }}">
+        <span>←</span>
+        <span data-i18n="nav.back">Back to hub</span>
+    </a>
+
+    <section class="game-heading">
+        <span class="section-kicker" data-i18n="mode.aim.tag">PRIVATE DUEL</span>
+        <h1 data-i18n="mode.aim.name">Aim Duel</h1>
+    </section>
+
+    {% set game = 'aim' %}
+    {% include "_lobby.html" %}
+
     <section class="game-stage locked" id="game-stage">
         <div class="stage-lock" id="stage-lock"><strong data-i18n="stage.locked">Connect to a room first</strong><span data-i18n="stage.lockedHint">The game unlocks when both players are ready.</span></div>
         <div class="aim-zone" id="aim-zone"><div class="aim-placeholder" id="aim-placeholder" data-i18n="aim.waiting">WAITING FOR ROUND</div><button class="aim-target" id="aim-target" type="button" hidden></button></div>
@@ -13,4 +24,8 @@
     </section>
 </main>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/lobby.js') }}"></script><script src="{{ url_for('static', filename='js/aim.js') }}"></script>{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+<script src="{{ url_for('static', filename='js/aim.js') }}"></script>
+{% endblock %}

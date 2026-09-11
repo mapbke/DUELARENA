@@ -1,14 +1,81 @@
 <section class="lobby" data-game="{{ game }}">
-    <div class="lobby-header"><div><span class="eyebrow" data-i18n="lobby.eyebrow">PRIVATE ROOM</span><h2 id="lobby-title" data-i18n="lobby.title">Create or join a room</h2></div><div class="room-chip hidden" id="room-badge"><span data-i18n="lobby.room">Room</span><strong id="room-code-display">-----</strong></div></div>
-    <div id="lobby-setup" class="lobby-setup">
-        <button class="create-room-button" id="create-room-button" type="button"><span class="plus-icon">+</span><span><strong data-i18n="lobby.create">Create room</strong><small data-i18n="lobby.createHint">Get a code and invite your opponent</small></span><b>→</b></button>
-        <div class="lobby-divider"><span data-i18n="lobby.orJoin">or join by code</span></div>
-        <div class="join-room-row"><input id="room-code-input" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ABCDE"><button id="join-room-button" type="button" data-i18n="lobby.join">Join</button></div>
+    <div class="lobby-header">
+        <div>
+            <span class="section-kicker" data-i18n="lobby.eyebrow">PRIVATE ROOM</span>
+            <h2 id="lobby-title" data-i18n="lobby.title">Create or join a room</h2>
+        </div>
+
+        <div class="room-chip hidden" id="room-badge">
+            <span data-i18n="lobby.room">Room</span>
+            <strong id="room-code-display">-----</strong>
+        </div>
     </div>
+
+    <div id="lobby-setup" class="lobby-setup">
+        <button class="create-room-button" id="create-room-button" type="button">
+            <span class="plus-icon">+</span>
+            <span>
+                <strong data-i18n="lobby.create">Create room</strong>
+                <small data-i18n="lobby.createHint">Get a code and invite your opponent</small>
+            </span>
+            <b>→</b>
+        </button>
+
+        <div class="lobby-divider"><span data-i18n="lobby.orJoin">or join by code</span></div>
+
+        <div class="join-room-row">
+            <input id="room-code-input" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ABCDE">
+            <button id="join-room-button" type="button" data-i18n="lobby.join">Join</button>
+        </div>
+    </div>
+
     <div id="lobby-active" class="lobby-active hidden">
-        <div class="room-toolbar"><div><span data-i18n="lobby.code">Room code</span><strong id="big-room-code">-----</strong></div><div class="room-toolbar-actions"><button id="copy-room-button" type="button" data-i18n="lobby.copy">Copy</button><button class="danger-text" id="leave-room-button" type="button" data-i18n="lobby.leave">Leave</button></div></div>
-        <div class="players-grid"><div class="player-slot" id="player-one"></div><div class="vs-badge">VS</div><div class="player-slot right" id="player-two"></div></div>
-        <div class="ready-bar"><div><span class="ready-label">STATUS</span><div id="lobby-status" class="lobby-status"></div></div><button class="ready-button hidden" id="ready-button" type="button" data-i18n="lobby.ready">I'm ready</button></div>
+        <div class="room-toolbar">
+            <div>
+                <span data-i18n="lobby.code">Room code</span>
+                <strong id="big-room-code">-----</strong>
+            </div>
+            <div class="room-toolbar-actions">
+                <button id="copy-room-button" type="button" data-i18n="lobby.copy">Copy</button>
+                <button class="danger-text" id="leave-room-button" type="button" data-i18n="lobby.leave">Leave</button>
+            </div>
+        </div>
+
+        <div class="players-grid">
+            <div class="player-slot" id="player-one"></div>
+            <div class="vs-badge">VS</div>
+            <div class="player-slot right" id="player-two"></div>
+        </div>
+
+        <div class="ready-bar">
+            <div>
+                <span class="ready-label">STATUS</span>
+                <div id="lobby-status" class="lobby-status"></div>
+            </div>
+            <button class="ready-button hidden" id="ready-button" type="button" data-i18n="lobby.ready">I'm ready</button>
+        </div>
     </div>
 </section>
-<div class="result-modal hidden" id="result-modal"><div class="result-card" id="result-card"><button class="result-close" id="result-close" type="button">×</button><span class="result-kicker" id="result-kicker">ROUND COMPLETE</span><h2 class="result-outcome" id="result-outcome">VICTORY</h2><div class="result-player"><div id="result-avatar-wrap"></div><div><span data-i18n="result.winner">Winner</span><strong id="result-winner">Player</strong></div></div><div class="result-score" id="result-score">—</div><div class="result-actions"><button class="result-rematch" id="result-rematch" type="button" data-i18n="result.rematch">Ready for rematch</button><a href="{{ url_for('index') }}" data-i18n="result.home">Back to hub</a></div></div></div>
+
+<div class="result-modal hidden" id="result-modal">
+    <div class="result-card" id="result-card">
+        <button class="result-close" id="result-close" type="button">×</button>
+        <span class="result-kicker" id="result-kicker">ROUND COMPLETE</span>
+        <h2 class="result-outcome" id="result-outcome">VICTORY</h2>
+
+        <div class="result-player">
+            <div id="result-avatar-wrap"></div>
+            <div>
+                <span data-i18n="result.winner">Winner</span>
+                <strong id="result-winner">Player</strong>
+            </div>
+        </div>
+
+        <div class="result-score" id="result-score">—</div>
+
+        <div class="result-actions">
+            <button class="result-rematch" id="result-rematch" type="button" data-i18n="result.rematch">Ready for rematch</button>
+            <a href="{{ url_for('index') }}" data-i18n="result.home">Back to hub</a>
+        </div>
+    </div>
+</div>

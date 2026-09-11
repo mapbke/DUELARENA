@@ -4,14 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark light">
-    <meta name="theme-color" content="#0b0b0d">
+    <meta name="theme-color" content="#0a0a0c">
     <title>{% block title %}DuoArena{% endblock %}</title>
+
     <script>
         (() => {
             const savedTheme = localStorage.getItem("duo_theme") || "system";
             const dark = matchMedia("(prefers-color-scheme: dark)").matches;
             const resolved = savedTheme === "system" ? (dark ? "dark" : "light") : savedTheme;
             document.documentElement.dataset.theme = resolved;
+
             const savedLang = localStorage.getItem("duo_lang");
             const browserLang = (navigator.language || "en").toLowerCase();
             const resolvedLang = savedLang || (browserLang.startsWith("ru") ? "ru" : "en");
@@ -19,53 +21,121 @@
             window.__DUO_BOOT__ = { theme: savedTheme, lang: resolvedLang };
         })();
     </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="app-bg"></div>
+    <div class="page-noise"></div>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
     <header class="topbar">
-        <a class="brand" href="{{ url_for('index') if user else url_for('login') }}">
-            <span class="brand-symbol">D</span><span class="brand-word">DuoArena</span>
-        </a>
-        <div class="top-actions">
-            {% if user %}
-            <span class="server-status" id="server-pill"><span class="server-dot"></span><span id="server-label" data-i18n="server.connecting">Connecting</span></span>
-            <button class="user-button" id="user-menu-button" type="button">
-                {% if user.avatar_url %}<img src="{{ user.avatar_url }}" alt="">{% else %}<span class="avatar-fallback">{{ user.display_name[:1]|upper }}</span>{% endif %}
-                <span class="user-button-copy"><strong>{{ user.display_name }}</strong><small>{{ provider_name }}</small></span><span class="chevron">⌄</span>
-            </button>
-            {% else %}
-            <button class="icon-button" id="settings-button" type="button" aria-label="Settings">⚙</button>
-            {% endif %}
+        <div class="topbar-inner">
+            <a class="brand" href="{{ url_for('index') if user else url_for('login') }}">
+                <span class="brand-mark">D</span>
+                <span class="brand-name">DuoArena</span>
+            </a>
+
+            <div class="top-actions">
+                {% if user %}
+                <span class="server-status" id="server-pill">
+                    <span class="server-dot"></span>
+                    <span id="server-label" data-i18n="server.connecting">Connecting</span>
+                </span>
+
+                <button class="user-button" id="user-menu-button" type="button">
+                    {% if user.avatar_url %}
+                        <img src="{{ user.avatar_url }}" alt="">
+                    {% else %}
+                        <span class="avatar-fallback">{{ user.display_name[:1]|upper }}</span>
+                    {% endif %}
+                    <span class="user-button-copy">
+                        <strong>{{ user.display_name }}</strong>
+                        <small>{{ provider_name }}</small>
+                    </span>
+                    <span class="chevron">⌄</span>
+                </button>
+                {% else %}
+                <button class="icon-button" id="settings-button" type="button" aria-label="Settings">⚙</button>
+                {% endif %}
+            </div>
         </div>
     </header>
 
     {% if user %}
     <div class="popover user-popover" id="user-popover">
         <div class="popover-profile">
-            {% if user.avatar_url %}<img src="{{ user.avatar_url }}" alt="">{% else %}<span class="avatar-fallback large">{{ user.display_name[:1]|upper }}</span>{% endif %}
-            <div><strong>{{ user.display_name }}</strong><span>{{ provider_name }}</span></div>
+            {% if user.avatar_url %}
+                <img src="{{ user.avatar_url }}" alt="">
+            {% else %}
+                <span class="avatar-fallback large">{{ user.display_name[:1]|upper }}</span>
+            {% endif %}
+            <div>
+                <strong>{{ user.display_name }}</strong>
+                <span>{{ provider_name }}</span>
+            </div>
         </div>
+
         <div class="popover-separator"></div>
-        <label class="setting-row"><span data-i18n="settings.language">Language</span><select id="language-select"><option value="en">English</option><option value="ru">Русский</option></select></label>
-        <label class="setting-row"><span data-i18n="settings.theme">Theme</span><select id="theme-select"><option value="system" data-i18n="theme.system">System</option><option value="dark" data-i18n="theme.dark">Dark</option><option value="light" data-i18n="theme.light">Light</option></select></label>
+
+        <label class="setting-row">
+            <span data-i18n="settings.language">Language</span>
+            <select id="language-select">
+                <option value="en">English</option>
+                <option value="ru">Русский</option>
+            </select>
+        </label>
+
+        <label class="setting-row">
+            <span data-i18n="settings.theme">Theme</span>
+            <select id="theme-select">
+                <option value="system" data-i18n="theme.system">System</option>
+                <option value="dark" data-i18n="theme.dark">Dark</option>
+                <option value="light" data-i18n="theme.light">Light</option>
+            </select>
+        </label>
+
         <div class="popover-separator"></div>
-        <a class="menu-link" href="{{ url_for('stats') }}"><span data-i18n="nav.stats">Statistics</span><span>↗</span></a>
-        <a class="menu-link danger-link" href="{{ url_for('logout') }}"><span data-i18n="nav.logout">Log out</span><span>→</span></a>
+        <a class="menu-link" href="{{ url_for('stats') }}">
+            <span data-i18n="nav.stats">Statistics</span>
+            <span>↗</span>
+        </a>
+        <a class="menu-link danger-link" href="{{ url_for('logout') }}">
+            <span data-i18n="nav.logout">Log out</span>
+            <span>→</span>
+        </a>
     </div>
     {% else %}
     <div class="popover settings-popover" id="settings-popover">
-        <label class="setting-row"><span data-i18n="settings.language">Language</span><select id="language-select"><option value="en">English</option><option value="ru">Русский</option></select></label>
-        <label class="setting-row"><span data-i18n="settings.theme">Theme</span><select id="theme-select"><option value="system" data-i18n="theme.system">System</option><option value="dark" data-i18n="theme.dark">Dark</option><option value="light" data-i18n="theme.light">Light</option></select></label>
+        <label class="setting-row">
+            <span data-i18n="settings.language">Language</span>
+            <select id="language-select">
+                <option value="en">English</option>
+                <option value="ru">Русский</option>
+            </select>
+        </label>
+
+        <label class="setting-row">
+            <span data-i18n="settings.theme">Theme</span>
+            <select id="theme-select">
+                <option value="system" data-i18n="theme.system">System</option>
+                <option value="dark" data-i18n="theme.dark">Dark</option>
+                <option value="light" data-i18n="theme.light">Light</option>
+            </select>
+        </label>
     </div>
     {% endif %}
 
     {% block content %}{% endblock %}
+
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
-    {% if user %}<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script><script src="{{ url_for('static', filename='js/socket.js') }}"></script>{% endif %}
+    {% if user %}
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+    {% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

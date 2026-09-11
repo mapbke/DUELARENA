@@ -1,21 +1,164 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Hub{% endblock %}
+
 {% block content %}
-<main class="page">
-    <section class="dashboard-hero">
-        <div class="dashboard-copy"><span class="eyebrow" data-i18n="home.eyebrow">PRIVATE 1V1 ARENA</span><h1><span data-i18n="home.title1">Pick a game.</span><br><em data-i18n="home.title2">Beat your friend.</em></h1><p data-i18n="home.description">Create a room, send the code and start a duel in seconds.</p></div>
-        <aside class="profile-summary">
-            <div class="profile-summary-top">{% if user.avatar_url %}<img src="{{ user.avatar_url }}" alt="">{% else %}<span class="avatar-fallback hero-avatar">{{ user.display_name[:1]|upper }}</span>{% endif %}<div><span>{{ provider_name }}</span><strong>{{ user.display_name }}</strong></div></div>
-            <div class="profile-numbers"><div><span data-i18n="stats.wins">Wins</span><strong>{{ profile.wins if profile else 0 }}</strong></div><div><span data-i18n="stats.losses">Losses</span><strong>{{ profile.losses if profile else 0 }}</strong></div><div><span data-i18n="stats.winrate">Winrate</span><strong>{{ profile.winrate if profile else 0 }}%</strong></div></div>
+<main class="page home-page">
+    <section class="hero">
+        <div class="hero-copy">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                <span data-i18n="home.eyebrow">PRIVATE 1V1 ARENA</span>
+            </div>
+
+            <h1>
+                <span data-i18n="home.title1">Pick a game.</span>
+                <em data-i18n="home.title2">Beat your friend.</em>
+            </h1>
+
+            <p data-i18n="home.description">
+                Create a room, send the code and start a duel in seconds.
+            </p>
+
+            <div class="hero-actions">
+                <a href="#modes" class="primary-link">
+                    <span data-i18n="home.modesTitle">Choose your arena</span>
+                    <b>↓</b>
+                </a>
+                <a href="{{ url_for('stats') }}" class="secondary-link">
+                    <span data-i18n="nav.stats">Statistics</span>
+                    <b>↗</b>
+                </a>
+            </div>
+        </div>
+
+        <aside class="profile-card">
+            <div class="profile-card-head">
+                <div class="profile-identity">
+                    {% if user.avatar_url %}
+                        <img src="{{ user.avatar_url }}" alt="">
+                    {% else %}
+                        <span class="avatar-fallback hero-avatar">{{ user.display_name[:1]|upper }}</span>
+                    {% endif %}
+                    <div>
+                        <span>{{ provider_name }}</span>
+                        <strong>{{ user.display_name }}</strong>
+                    </div>
+                </div>
+                <span class="profile-online">ONLINE</span>
+            </div>
+
+            <div class="profile-record">
+                <div>
+                    <span data-i18n="stats.wins">Wins</span>
+                    <strong>{{ profile.wins if profile else 0 }}</strong>
+                </div>
+                <div>
+                    <span data-i18n="stats.losses">Losses</span>
+                    <strong>{{ profile.losses if profile else 0 }}</strong>
+                </div>
+                <div>
+                    <span data-i18n="stats.winrate">Winrate</span>
+                    <strong>{{ profile.winrate if profile else 0 }}%</strong>
+                </div>
+            </div>
+
+            <a class="profile-link" href="{{ url_for('stats') }}">
+                <span data-i18n="nav.stats">Statistics</span>
+                <b>→</b>
+            </a>
         </aside>
     </section>
-    <section class="section-head"><div><span class="eyebrow" data-i18n="home.modesEyebrow">GAME MODES</span><h2 data-i18n="home.modesTitle">Choose your arena</h2></div><a href="{{ url_for('stats') }}" class="text-link"><span data-i18n="nav.stats">Statistics</span><b>↗</b></a></section>
-    <section class="mode-grid">
-        <a class="mode-card" href="{{ url_for('reaction') }}"><div class="mode-index">01</div><span class="mode-label" data-i18n="mode.reaction.tag">REACTION</span><h3 data-i18n="mode.reaction.name">Reaction Duel</h3><p data-i18n="mode.reaction.desc">Wait for green. The fastest valid click wins.</p><div class="mode-footer"><span data-i18n="mode.reaction.rule">Lowest ms</span><b>→</b></div></a>
-        <a class="mode-card" href="{{ url_for('typing') }}"><div class="mode-index">02</div><span class="mode-label" data-i18n="mode.typing.tag">TYPING</span><h3 data-i18n="mode.typing.name">Typing Duel</h3><p data-i18n="mode.typing.desc">Same text, same start. Highest WPM wins.</p><div class="mode-footer"><span data-i18n="mode.typing.rule">Highest WPM</span><b>→</b></div></a>
-        <a class="mode-card" href="{{ url_for('cps') }}"><div class="mode-index">03</div><span class="mode-label" data-i18n="mode.cps.tag">CLICKS</span><h3 data-i18n="mode.cps.name">CPS Battle</h3><p data-i18n="mode.cps.desc">Ten seconds. Maximum clicks. Nothing else matters.</p><div class="mode-footer"><span data-i18n="mode.cps.rule">Most clicks</span><b>→</b></div></a>
-        <a class="mode-card" href="{{ url_for('aim') }}"><div class="mode-index">04</div><span class="mode-label" data-i18n="mode.aim.tag">AIM</span><h3 data-i18n="mode.aim.name">Aim Duel</h3><p data-i18n="mode.aim.desc">Hit 15 targets. Fastest target pace wins.</p><div class="mode-footer"><span data-i18n="mode.aim.rule">Fastest pace</span><b>→</b></div></a>
-        <a class="mode-card" href="{{ url_for('blind') }}"><div class="mode-index">05</div><span class="mode-label" data-i18n="mode.blind.tag">TIMING</span><h3 data-i18n="mode.blind.name">Blind Timing</h3><p data-i18n="mode.blind.desc">Stop as close as possible to exactly 5.000 seconds.</p><div class="mode-footer"><span data-i18n="mode.blind.rule">Lowest error</span><b>→</b></div></a>
+
+    <section class="modes-section" id="modes">
+        <div class="section-header">
+            <div>
+                <span class="section-kicker" data-i18n="home.modesEyebrow">GAME MODES</span>
+                <h2 data-i18n="home.modesTitle">Choose your arena</h2>
+            </div>
+            <p>5 modes · private rooms · instant rematch</p>
+        </div>
+
+        <div class="mode-grid">
+            <a class="mode-card mode-reaction" href="{{ url_for('reaction') }}">
+                <div class="mode-card-top">
+                    <span class="mode-icon">R</span>
+                    <span class="mode-number">01</span>
+                </div>
+                <div class="mode-content">
+                    <span class="mode-label" data-i18n="mode.reaction.tag">REACTION</span>
+                    <h3 data-i18n="mode.reaction.name">Reaction Duel</h3>
+                    <p data-i18n="mode.reaction.desc">Wait for green. The fastest valid click wins.</p>
+                </div>
+                <div class="mode-footer">
+                    <span data-i18n="mode.reaction.rule">Lowest ms</span>
+                    <b>↗</b>
+                </div>
+            </a>
+
+            <a class="mode-card mode-typing" href="{{ url_for('typing') }}">
+                <div class="mode-card-top">
+                    <span class="mode-icon">T</span>
+                    <span class="mode-number">02</span>
+                </div>
+                <div class="mode-content">
+                    <span class="mode-label" data-i18n="mode.typing.tag">TYPING</span>
+                    <h3 data-i18n="mode.typing.name">Typing Duel</h3>
+                    <p data-i18n="mode.typing.desc">Same text, same start. Highest WPM wins.</p>
+                </div>
+                <div class="mode-footer">
+                    <span data-i18n="mode.typing.rule">Highest WPM</span>
+                    <b>↗</b>
+                </div>
+            </a>
+
+            <a class="mode-card mode-cps" href="{{ url_for('cps') }}">
+                <div class="mode-card-top">
+                    <span class="mode-icon">C</span>
+                    <span class="mode-number">03</span>
+                </div>
+                <div class="mode-content">
+                    <span class="mode-label" data-i18n="mode.cps.tag">CLICKS</span>
+                    <h3 data-i18n="mode.cps.name">CPS Battle</h3>
+                    <p data-i18n="mode.cps.desc">Ten seconds. Maximum clicks. Nothing else matters.</p>
+                </div>
+                <div class="mode-footer">
+                    <span data-i18n="mode.cps.rule">Most clicks</span>
+                    <b>↗</b>
+                </div>
+            </a>
+
+            <a class="mode-card mode-aim" href="{{ url_for('aim') }}">
+                <div class="mode-card-top">
+                    <span class="mode-icon">A</span>
+                    <span class="mode-number">04</span>
+                </div>
+                <div class="mode-content">
+                    <span class="mode-label" data-i18n="mode.aim.tag">AIM</span>
+                    <h3 data-i18n="mode.aim.name">Aim Duel</h3>
+                    <p data-i18n="mode.aim.desc">Hit 15 targets. Fastest target pace wins.</p>
+                </div>
+                <div class="mode-footer">
+                    <span data-i18n="mode.aim.rule">Fastest pace</span>
+                    <b>↗</b>
+                </div>
+            </a>
+
+            <a class="mode-card mode-blind mode-wide" href="{{ url_for('blind') }}">
+                <div class="mode-card-top">
+                    <span class="mode-icon">B</span>
+                    <span class="mode-number">05</span>
+                </div>
+                <div class="mode-content">
+                    <span class="mode-label" data-i18n="mode.blind.tag">TIMING</span>
+                    <h3 data-i18n="mode.blind.name">Blind Timing</h3>
+                    <p data-i18n="mode.blind.desc">Stop as close as possible to exactly 5.000 seconds.</p>
+                </div>
+                <div class="mode-footer">
+                    <span data-i18n="mode.blind.rule">Lowest error</span>
+                    <b>↗</b>
+                </div>
+            </a>
+        </div>
     </section>
 </main>
 {% endblock %}
