@@ -1,40 +1,17 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // CPS Battle{% endblock %}
-
 {% block content %}
 <main class="page game-page">
-    <a class="back-link" href="{{ url_for('index') }}">← На главную</a>
-
-    <section class="game-heading">
-        <div class="eyebrow">10 SECONDS / MORE CLICKS WINS</div>
-        <h1>CPS Battle</h1>
+    <a class="back-link" href="{{ url_for('index') }}"><span>←</span><span data-i18n="nav.back">Back to hub</span></a>
+    <section class="game-heading"><span class="eyebrow" data-i18n="mode.cps.tag">CLICKS</span><h1 data-i18n="mode.cps.name">CPS Battle</h1></section>
+    {% set game = 'cps' %}{% include "_lobby.html" %}
+    <section class="game-stage locked" id="game-stage">
+        <div class="stage-lock" id="stage-lock"><strong data-i18n="stage.locked">Connect to a room first</strong><span data-i18n="stage.lockedHint">The game unlocks when both players are ready.</span></div>
+        <div class="game-counter"><span data-i18n="cps.timeLeft">TIME LEFT</span><strong id="cps-time">10.0</strong></div>
+        <button class="click-pad" id="cps-button" type="button" disabled data-i18n="cps.waiting">WAITING</button>
+        <div class="live-stats"><div><span data-i18n="cps.clicks">Clicks</span><strong id="cps-clicks">0</strong></div><div><span>CPS</span><strong id="cps-rate">0.0</strong></div></div>
+        <div class="game-message" id="game-message"></div>
     </section>
-
-    {% set game = 'cps' %}
-    {% include "_lobby.html" %}
-
-    
-<section class="game-stage locked" id="game-stage">
-    <div class="stage-lock" id="stage-lock">
-        <strong>Сначала подключитесь к комнате</strong>
-        <span>Раунд длится ровно 10 секунд.</span>
-    </div>
-
-    <div class="timer-label">ОСТАЛОСЬ <strong id="cps-time">10.0</strong> сек.</div>
-    <button class="click-pad" id="cps-button" type="button" disabled>ЖДЁМ РАУНД</button>
-
-    <div class="live-stats">
-        <div><small>Клики</small><strong id="cps-clicks">0</strong></div>
-        <div><small>CPS</small><strong id="cps-rate">0.0</strong></div>
-    </div>
-
-    <div class="result-line" id="game-message"></div>
-</section>
-
 </main>
 {% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
-<script src="{{ url_for('static', filename='js/cps.js') }}"></script>
-{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/lobby.js') }}"></script><script src="{{ url_for('static', filename='js/cps.js') }}"></script>{% endblock %}

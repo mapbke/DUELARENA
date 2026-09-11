@@ -1,114 +1,21 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Hub{% endblock %}
-
 {% block content %}
-<main class="page hub-page">
-    <section class="hero hero-shell">
-        <div class="hero-copy">
-            <div class="eyebrow"><span></span> PRIVATE REALTIME ARENA</div>
-            <h1>Дуэли без<br><em>лишнего шума.</em></h1>
-            <p>
-                Выберите режим, создайте комнату и отправьте другу короткий код.
-                Два игрока, один раунд, понятный результат.
-            </p>
-
-            {% if not user %}
-            <a class="primary hero-cta" href="{{ url_for('login_github') }}">
-                <span>Войти через GitHub</span>
-                <b>→</b>
-            </a>
-            {% else %}
-            <div class="steps">
-                <div><b>01</b><span>Выберите режим</span></div>
-                <div><b>02</b><span>Создайте комнату</span></div>
-                <div><b>03</b><span>Скиньте код сопернику</span></div>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if user %}
-        <aside class="profile-card">
-            <div class="profile-card-head">
-                <img src="{{ user.avatar_url }}" alt="">
-                <div>
-                    <small>YOUR PROFILE</small>
-                    <strong>{{ user.login }}</strong>
-                </div>
-            </div>
-
-            <div class="profile-record">
-                <div>
-                    <small>WINS</small>
-                    <strong>{{ profile.wins if profile else 0 }}</strong>
-                </div>
-                <div>
-                    <small>LOSSES</small>
-                    <strong>{{ profile.losses if profile else 0 }}</strong>
-                </div>
-                <div>
-                    <small>WINRATE</small>
-                    {% set total = (profile.wins + profile.losses) if profile else 0 %}
-                    {% set wr = ((profile.wins * 100 / total)|round(0)|int) if total else 0 %}
-                    <strong>{{ wr }}%</strong>
-                </div>
-            </div>
-
-            <a href="{{ url_for('stats') }}" class="profile-stats-link">
-                Открыть статистику <span>↗</span>
-            </a>
+<main class="page">
+    <section class="dashboard-hero">
+        <div class="dashboard-copy"><span class="eyebrow" data-i18n="home.eyebrow">PRIVATE 1V1 ARENA</span><h1><span data-i18n="home.title1">Pick a game.</span><br><em data-i18n="home.title2">Beat your friend.</em></h1><p data-i18n="home.description">Create a room, send the code and start a duel in seconds.</p></div>
+        <aside class="profile-summary">
+            <div class="profile-summary-top">{% if user.avatar_url %}<img src="{{ user.avatar_url }}" alt="">{% else %}<span class="avatar-fallback hero-avatar">{{ user.display_name[:1]|upper }}</span>{% endif %}<div><span>{{ provider_name }}</span><strong>{{ user.display_name }}</strong></div></div>
+            <div class="profile-numbers"><div><span data-i18n="stats.wins">Wins</span><strong>{{ profile.wins if profile else 0 }}</strong></div><div><span data-i18n="stats.losses">Losses</span><strong>{{ profile.losses if profile else 0 }}</strong></div><div><span data-i18n="stats.winrate">Winrate</span><strong>{{ profile.winrate if profile else 0 }}%</strong></div></div>
         </aside>
-        {% endif %}
     </section>
-
-    <section class="section-heading">
-        <div>
-            <div class="eyebrow"><span></span> MODES</div>
-            <h2>Выберите арену</h2>
-        </div>
-        <p>Все режимы работают через одно приватное лобби на двух игроков.</p>
-    </section>
-
+    <section class="section-head"><div><span class="eyebrow" data-i18n="home.modesEyebrow">GAME MODES</span><h2 data-i18n="home.modesTitle">Choose your arena</h2></div><a href="{{ url_for('stats') }}" class="text-link"><span data-i18n="nav.stats">Statistics</span><b>↗</b></a></section>
     <section class="mode-grid">
-        {% set games = [
-            ('reaction', '01', 'REACTION', 'Reaction Duel', 'Реакция на серверный сигнал. Ранний клик — фальстарт.', 'LOWEST MS'),
-            ('typing', '02', 'TYPING', 'Typing Duel', 'Одинаковый текст для обоих игроков. Скорость и точность.', 'HIGHEST WPM'),
-            ('cps', '03', 'CLICKS', 'CPS Battle', 'Десять секунд чистого клика. Без лишних правил.', 'MOST CLICKS'),
-            ('aim', '04', 'AIM', 'Aim Duel', 'Пятнадцать целей в случайных точках арены.', 'FASTEST PACE'),
-            ('blind', '05', 'TIMING', 'Blind Timing', 'Попадите максимально близко к отметке 5.000 секунд.', 'LOWEST ERROR')
-        ] %}
-
-        {% for endpoint, number, tag, name, description, rule in games %}
-        <article class="mode-card">
-            <div class="mode-top">
-                <span class="mode-number">{{ number }}</span>
-                <span class="mode-rule">{{ rule }}</span>
-            </div>
-            <div class="mode-tag">{{ tag }}</div>
-            <h3>{{ name }}</h3>
-            <p>{{ description }}</p>
-
-            {% if user %}
-            <a href="{{ url_for(endpoint) }}" class="mode-action">
-                <span>Открыть режим</span>
-                <b>→</b>
-            </a>
-            {% else %}
-            <a href="{{ url_for('login_github', next=url_for(endpoint)) }}" class="mode-action">
-                <span>Войти и играть</span>
-                <b>→</b>
-            </a>
-            {% endif %}
-        </article>
-        {% endfor %}
+        <a class="mode-card" href="{{ url_for('reaction') }}"><div class="mode-index">01</div><span class="mode-label" data-i18n="mode.reaction.tag">REACTION</span><h3 data-i18n="mode.reaction.name">Reaction Duel</h3><p data-i18n="mode.reaction.desc">Wait for green. The fastest valid click wins.</p><div class="mode-footer"><span data-i18n="mode.reaction.rule">Lowest ms</span><b>→</b></div></a>
+        <a class="mode-card" href="{{ url_for('typing') }}"><div class="mode-index">02</div><span class="mode-label" data-i18n="mode.typing.tag">TYPING</span><h3 data-i18n="mode.typing.name">Typing Duel</h3><p data-i18n="mode.typing.desc">Same text, same start. Highest WPM wins.</p><div class="mode-footer"><span data-i18n="mode.typing.rule">Highest WPM</span><b>→</b></div></a>
+        <a class="mode-card" href="{{ url_for('cps') }}"><div class="mode-index">03</div><span class="mode-label" data-i18n="mode.cps.tag">CLICKS</span><h3 data-i18n="mode.cps.name">CPS Battle</h3><p data-i18n="mode.cps.desc">Ten seconds. Maximum clicks. Nothing else matters.</p><div class="mode-footer"><span data-i18n="mode.cps.rule">Most clicks</span><b>→</b></div></a>
+        <a class="mode-card" href="{{ url_for('aim') }}"><div class="mode-index">04</div><span class="mode-label" data-i18n="mode.aim.tag">AIM</span><h3 data-i18n="mode.aim.name">Aim Duel</h3><p data-i18n="mode.aim.desc">Hit 15 targets. Fastest target pace wins.</p><div class="mode-footer"><span data-i18n="mode.aim.rule">Fastest pace</span><b>→</b></div></a>
+        <a class="mode-card" href="{{ url_for('blind') }}"><div class="mode-index">05</div><span class="mode-label" data-i18n="mode.blind.tag">TIMING</span><h3 data-i18n="mode.blind.name">Blind Timing</h3><p data-i18n="mode.blind.desc">Stop as close as possible to exactly 5.000 seconds.</p><div class="mode-footer"><span data-i18n="mode.blind.rule">Lowest error</span><b>→</b></div></a>
     </section>
-
-    <a class="stats-banner" href="{{ url_for('stats') }}">
-        <div>
-            <div class="eyebrow"><span></span> GLOBAL</div>
-            <strong>Лидерборд и история матчей</strong>
-            <p>Победы, поражения, winrate и результаты последних дуэлей.</p>
-        </div>
-        <span class="stats-banner-arrow">↗</span>
-    </a>
 </main>
 {% endblock %}

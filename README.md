@@ -1,59 +1,95 @@
-# DuoArena V3 — polished build
+# DuoArena V4 — Global Rebrand
 
-Что исправлено в этой версии:
+Полный ребрендинг DuoArena.
 
-- `Unknown` в истории матчей:
-  - GitHub-пользователь повторно синхронизируется с SQLite при каждом активном сеансе;
-  - в матч сохраняется snapshot логина и аватара победителя/проигравшего;
-  - старая база автоматически мигрируется без ручного удаления.
-- После каждого раунда теперь появляется крупное окно результата:
-  - ПОБЕДА / ПОРАЖЕНИЕ / НИЧЬЯ;
-  - имя победителя;
-  - его аватар;
-  - лучший результат;
-  - кнопка реванша.
-- Полностью переработан визуальный стиль:
-  - новый hub;
-  - профиль игрока с W/L/WR;
-  - понятнее карточки режимов;
-  - компактное лобби;
-  - новый лидерборд;
-  - подробные карточки матчей с результатами обоих игроков.
-- `/api/stats` теперь отдаёт summary: players / matches / top player.
-- Сохранена текущая GitHub OAuth + Socket.IO room architecture.
+## V4
 
-## Замена
+- GitHub OAuth сохранён.
+- Добавлен Google OAuth.
+- Добавлен гостевой вход с ником.
+- Язык определяется автоматически по языку браузера:
+  - `ru*` → Русский;
+  - остальные → English.
+- В меню можно вручную переключать RU / EN.
+- Темы: System / Dark / Light.
+- Тема и язык сохраняются в `localStorage`.
+- Основной шрифт: Inter.
+- JetBrains Mono используется только для кодов, таймеров и чисел.
+- Полностью новый login screen, hub, lobby, profile menu и statistics UI.
+- Новая универсальная система пользователей: GitHub / Google / Guest.
+- История матчей хранит snapshot имени, аватара и провайдера — больше не зависит от JOIN к текущей таблице пользователей.
+- Старые GitHub-пользователи и матчи V3 мигрируются в V4 при старте.
 
-Распаковать содержимое архива в корень репозитория с заменой файлов.
-
-```bash
-git add .
-git commit -m "polish DuoArena UI and fix match history"
-git push origin main
-```
-
-Render:
-
-```text
-Build: pip install -r requirements.txt
-Start: gunicorn -w 1 --threads 100 --bind 0.0.0.0:$PORT app:app
-```
-
-Environment Variables остаются прежними:
+## Render Environment
 
 ```text
 BASE_URL=https://duoarena.onrender.com
+SECRET_KEY=...
+
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
-SECRET_KEY=...
+
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
 ```
 
-## Почему раньше победитель был Unknown
+## GitHub OAuth
 
-Render мог перезапустить приложение/базу, а browser session GitHub оставалась валидной.
-В итоге игрок всё ещё считался авторизованным, но строки этого пользователя в
-`github_users` уже не было. `game_matches` содержал GitHub ID победителя, а JOIN
-не находил имя и показывал `Unknown`.
+Homepage:
 
-V3 автоматически восстанавливает запись пользователя из Flask session и также
-сохраняет имя/аватар непосредственно в строке матча.
+```text
+https://duoarena.onrender.com
+```
+
+Callback:
+
+```text
+https://duoarena.onrender.com/auth/github/callback
+```
+
+## Google OAuth
+
+В Google Cloud Console создай **OAuth 2.0 Client ID → Web application**.
+
+Authorized JavaScript origin:
+
+```text
+https://duoarena.onrender.com
+```
+
+Authorized redirect URI:
+
+```text
+https://duoarena.onrender.com/auth/google/callback
+```
+
+После этого добавь `GOOGLE_CLIENT_ID` и `GOOGLE_CLIENT_SECRET` в Render → Environment.
+
+## Render
+
+Build command:
+
+```bash
+pip install -r requirements.txt
+```
+
+Start command:
+
+```bash
+gunicorn -w 1 --threads 100 --bind 0.0.0.0:$PORT app:app
+```
+
+## Deploy
+
+Распакуй архив в корень репозитория с заменой файлов:
+
+```bash
+git add .
+git commit -m "DuoArena V4 global rebrand"
+git push origin main
+```
+
+## Render Free
+
+Комнаты живут в RAM, поэтому после рестарта процесса активные комнаты исчезают.
+SQLite на free Render также не является постоянным хранилищем. Для полноценного публичного запуска лучше следующим этапом перенести данные в Postgres.

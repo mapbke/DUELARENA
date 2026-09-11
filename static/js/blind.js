@@ -1,85 +1,9 @@
 (() => {
-    const socket = window.socket;
-    const display = document.getElementById("blind-display");
-    const stopButton = document.getElementById("blind-stop");
-    const resultNode = document.getElementById("blind-result");
-    const differenceNode = document.getElementById("blind-difference");
-    const message = document.getElementById("game-message");
-
-    let token = null;
-    let active = false;
-    let startedAt = 0;
-    let hideTimer = null;
-    let raf = null;
-
-    function reset() {
-        token = null;
-        active = false;
-        startedAt = 0;
-        display.textContent = "WAITING";
-        stopButton.disabled = true;
-        stopButton.textContent = "ЖДЁМ РАУНД";
-        resultNode.textContent = "—";
-        differenceNode.textContent = "—";
-        message.textContent = "";
-        if (hideTimer) clearTimeout(hideTimer);
-        if (raf) cancelAnimationFrame(raf);
-    }
-
-    function animateVisibleTimer() {
-        if (!active) return;
-        const elapsed = performance.now() - startedAt;
-        display.textContent = `${(elapsed / 1000).toFixed(3)}s`;
-        raf = requestAnimationFrame(animateVisibleTimer);
-    }
-
-    window.addEventListener("duo:round-start", (event) => {
-        reset();
-        token = event.detail.round_token;
-        active = true;
-        startedAt = performance.now();
-
-        stopButton.disabled = false;
-        stopButton.textContent = "СТОП";
-        animateVisibleTimer();
-
-        hideTimer = setTimeout(() => {
-            if (!active) return;
-            if (raf) cancelAnimationFrame(raf);
-            display.textContent = "[ BLIND MODE ]";
-        }, 900);
-    });
-
-    stopButton.addEventListener("click", () => {
-        if (!active) return;
-
-        active = false;
-        stopButton.disabled = true;
-        stopButton.textContent = "РЕЗУЛЬТАТ ОТПРАВЛЕН";
-
-        if (raf) cancelAnimationFrame(raf);
-        if (hideTimer) clearTimeout(hideTimer);
-
-        const elapsedMs = performance.now() - startedAt;
-        const differenceMs = Math.abs(5000 - elapsedMs);
-
-        display.textContent = `${(elapsedMs / 1000).toFixed(3)}s`;
-        resultNode.textContent = `${(elapsedMs / 1000).toFixed(3)}s`;
-        differenceNode.textContent = `${(differenceMs / 1000).toFixed(3)}s`;
-
-        socket.emit("submit_score", {
-            round_token: token,
-            score: Number(differenceMs.toFixed(2)),
-        });
-    });
-
-    window.addEventListener("duo:round-result", (event) => {
-        const result = event.detail;
-        message.textContent = result.draw
-            ? "Ничья."
-            : `${result.winner.login} побеждает с ошибкой ${(result.winner.score / 1000).toFixed(3)}s.`;
-        token = null;
-    });
-
-    reset();
+    const socket=window.socket,t=k=>window.DuoUI?.t(k)||k,display=document.getElementById("blind-display"),stop=document.getElementById("blind-stop"),result=document.getElementById("blind-result"),difference=document.getElementById("blind-difference");
+    let token=null,active=false,start=0,hideTimer=null,raf=null;
+    function reset(){token=null;active=false;start=0;display.textContent=t("blind.waiting");stop.disabled=true;stop.textContent=t("blind.waiting");result.textContent="—";difference.textContent="—";if(hideTimer)clearTimeout(hideTimer);if(raf)cancelAnimationFrame(raf);}
+    function animate(){if(!active)return;display.textContent=`${((performance.now()-start)/1000).toFixed(3)}s`;raf=requestAnimationFrame(animate);}
+    window.addEventListener("duo:round-start",e=>{reset();token=e.detail.round_token;active=true;start=performance.now();stop.disabled=false;stop.textContent=t("blind.stop");animate();hideTimer=setTimeout(()=>{if(!active)return;if(raf)cancelAnimationFrame(raf);display.textContent="[ BLIND ]";},900);});
+    stop.addEventListener("click",()=>{if(!active)return;active=false;stop.disabled=true;stop.textContent=t("blind.sent");if(raf)cancelAnimationFrame(raf);if(hideTimer)clearTimeout(hideTimer);const elapsed=performance.now()-start,diff=Math.abs(5000-elapsed);display.textContent=`${(elapsed/1000).toFixed(3)}s`;result.textContent=`${(elapsed/1000).toFixed(3)}s`;difference.textContent=`${(diff/1000).toFixed(3)}s`;socket.emit("submit_score",{round_token:token,score:Number(diff.toFixed(2))});});
+    window.addEventListener("duo:round-result",()=>token=null);window.addEventListener("duo:language-changed",()=>{if(!active){display.textContent=t("blind.waiting");stop.textContent=t("blind.waiting");}});reset();
 })();

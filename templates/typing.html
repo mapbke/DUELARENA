@@ -1,41 +1,17 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Typing Duel{% endblock %}
-
 {% block content %}
 <main class="page game-page">
-    <a class="back-link" href="{{ url_for('index') }}">← На главную</a>
-
-    <section class="game-heading">
-        <div class="eyebrow">SAME TEXT / HIGHER WPM WINS</div>
-        <h1>Typing Duel</h1>
+    <a class="back-link" href="{{ url_for('index') }}"><span>←</span><span data-i18n="nav.back">Back to hub</span></a>
+    <section class="game-heading"><span class="eyebrow" data-i18n="mode.typing.tag">TYPING</span><h1 data-i18n="mode.typing.name">Typing Duel</h1></section>
+    {% set game = 'typing' %}{% include "_lobby.html" %}
+    <section class="game-stage locked" id="game-stage">
+        <div class="stage-lock" id="stage-lock"><strong data-i18n="stage.locked">Connect to a room first</strong><span data-i18n="stage.lockedHint">The game unlocks when both players are ready.</span></div>
+        <div class="typing-text" id="typing-text"></div>
+        <textarea id="typing-input" rows="4" disabled data-i18n-placeholder="typing.placeholder" placeholder="Round has not started"></textarea>
+        <div class="live-stats"><div><span data-i18n="typing.speed">Speed</span><strong id="typing-wpm">0 WPM</strong></div><div><span data-i18n="typing.accuracy">Accuracy</span><strong id="typing-accuracy">100%</strong></div></div>
+        <div class="game-message" id="game-message"></div>
     </section>
-
-    {% set game = 'typing' %}
-    {% include "_lobby.html" %}
-
-    
-<section class="game-stage locked" id="game-stage">
-    <div class="stage-lock" id="stage-lock">
-        <strong>Сначала подключитесь к комнате</strong>
-        <span>Когда оба нажмут «Я готов», текст станет доступен.</span>
-    </div>
-
-    <div class="typing-text" id="typing-text"></div>
-    <textarea id="typing-input" class="typing-input" rows="4" disabled
-              placeholder="Раунд ещё не начался"></textarea>
-
-    <div class="live-stats">
-        <div><small>Скорость</small><strong id="typing-wpm">0 WPM</strong></div>
-        <div><small>Точность</small><strong id="typing-accuracy">100%</strong></div>
-    </div>
-
-    <div class="result-line" id="game-message"></div>
-</section>
-
 </main>
 {% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
-<script src="{{ url_for('static', filename='js/typing.js') }}"></script>
-{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/lobby.js') }}"></script><script src="{{ url_for('static', filename='js/typing.js') }}"></script>{% endblock %}

@@ -1,99 +1,14 @@
 <section class="lobby" data-game="{{ game }}">
-    <div class="lobby-topline">
-        <div>
-            <div class="eyebrow"><span></span> PRIVATE LOBBY</div>
-            <h2 id="lobby-title">Создайте или найдите комнату</h2>
-        </div>
-
-        <div class="room-badge hidden" id="room-badge">
-            <small>ROOM</small>
-            <strong id="room-code-display">-----</strong>
-        </div>
-    </div>
-
+    <div class="lobby-header"><div><span class="eyebrow" data-i18n="lobby.eyebrow">PRIVATE ROOM</span><h2 id="lobby-title" data-i18n="lobby.title">Create or join a room</h2></div><div class="room-chip hidden" id="room-badge"><span data-i18n="lobby.room">Room</span><strong id="room-code-display">-----</strong></div></div>
     <div id="lobby-setup" class="lobby-setup">
-        <button class="primary create-room-card" id="create-room-button" type="button">
-            <span class="create-icon">＋</span>
-            <span>
-                <strong>Создать комнату</strong>
-                <small>Получить новый код и ждать соперника</small>
-            </span>
-            <b>→</b>
-        </button>
-
-        <div class="lobby-divider"><span>или войдите по коду</span></div>
-
-        <div class="join-panel">
-            <div>
-                <label for="room-code-input">КОД КОМНАТЫ</label>
-                <input
-                    id="room-code-input"
-                    class="room-code-input"
-                    maxlength="5"
-                    placeholder="ABCDE"
-                    autocomplete="off"
-                    spellcheck="false"
-                >
-            </div>
-            <button class="secondary join-button" id="join-room-button" type="button">
-                Войти →
-            </button>
-        </div>
+        <button class="create-room-button" id="create-room-button" type="button"><span class="plus-icon">+</span><span><strong data-i18n="lobby.create">Create room</strong><small data-i18n="lobby.createHint">Get a code and invite your opponent</small></span><b>→</b></button>
+        <div class="lobby-divider"><span data-i18n="lobby.orJoin">or join by code</span></div>
+        <div class="join-room-row"><input id="room-code-input" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ABCDE"><button id="join-room-button" type="button" data-i18n="lobby.join">Join</button></div>
     </div>
-
     <div id="lobby-active" class="lobby-active hidden">
-        <div class="room-commandbar">
-            <div class="room-code-block">
-                <small>КОД КОМНАТЫ</small>
-                <strong id="big-room-code">-----</strong>
-            </div>
-
-            <div class="room-command-actions">
-                <button class="secondary" id="copy-room-button" type="button">Копировать код</button>
-                <button class="ghost danger" id="leave-room-button" type="button">Выйти</button>
-            </div>
-        </div>
-
-        <div class="players">
-            <div class="player-slot" id="player-one"></div>
-            <div class="versus">
-                <span>VS</span>
-            </div>
-            <div class="player-slot right" id="player-two"></div>
-        </div>
-
-        <div class="ready-area">
-            <div>
-                <small>STATUS</small>
-                <div class="lobby-status" id="lobby-status">Ждём второго игрока...</div>
-            </div>
-            <button class="primary ready-button hidden" id="ready-button" type="button">
-                Я готов
-            </button>
-        </div>
+        <div class="room-toolbar"><div><span data-i18n="lobby.code">Room code</span><strong id="big-room-code">-----</strong></div><div class="room-toolbar-actions"><button id="copy-room-button" type="button" data-i18n="lobby.copy">Copy</button><button class="danger-text" id="leave-room-button" type="button" data-i18n="lobby.leave">Leave</button></div></div>
+        <div class="players-grid"><div class="player-slot" id="player-one"></div><div class="vs-badge">VS</div><div class="player-slot right" id="player-two"></div></div>
+        <div class="ready-bar"><div><span class="ready-label">STATUS</span><div id="lobby-status" class="lobby-status"></div></div><button class="ready-button hidden" id="ready-button" type="button" data-i18n="lobby.ready">I'm ready</button></div>
     </div>
 </section>
-
-<div class="result-modal hidden" id="result-modal">
-    <div class="result-card" id="result-card">
-        <button class="result-close" id="result-close" type="button">×</button>
-
-        <div class="result-kicker" id="result-kicker">ROUND COMPLETE</div>
-        <div class="result-outcome" id="result-outcome">ПОБЕДА</div>
-
-        <img class="result-avatar" id="result-avatar" alt="">
-        <h2 id="result-winner">Player</h2>
-        <div class="result-score" id="result-score">—</div>
-
-        <div class="result-actions">
-            <button class="primary" id="result-rematch" type="button">
-                Готов к реваншу
-            </button>
-            <a class="secondary result-home" href="{{ url_for('index') }}">
-                На главную
-            </a>
-        </div>
-
-        <small class="result-note">Для нового раунда оба игрока должны подтвердить готовность.</small>
-    </div>
-</div>
+<div class="result-modal hidden" id="result-modal"><div class="result-card" id="result-card"><button class="result-close" id="result-close" type="button">×</button><span class="result-kicker" id="result-kicker">ROUND COMPLETE</span><h2 class="result-outcome" id="result-outcome">VICTORY</h2><div class="result-player"><div id="result-avatar-wrap"></div><div><span data-i18n="result.winner">Winner</span><strong id="result-winner">Player</strong></div></div><div class="result-score" id="result-score">—</div><div class="result-actions"><button class="result-rematch" id="result-rematch" type="button" data-i18n="result.rematch">Ready for rematch</button><a href="{{ url_for('index') }}" data-i18n="result.home">Back to hub</a></div></div></div>

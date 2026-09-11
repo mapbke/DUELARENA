@@ -1,80 +1,12 @@
 {% extends "base.html" %}
 {% block title %}DuoArena // Statistics{% endblock %}
-
 {% block content %}
 <main class="page stats-page">
-    <a class="back-link" href="{{ url_for('index') }}">← На главную</a>
-
-    <section class="stats-hero">
-        <div>
-            <div class="eyebrow"><span></span> GLOBAL DATA</div>
-            <h1>Статистика</h1>
-            <p>История дуэлей, рейтинг игроков и текущая активность арены.</p>
-        </div>
-    </section>
-
-    <section class="summary-grid">
-        <article class="summary-card">
-            <small>PLAYERS</small>
-            <strong id="summary-players">—</strong>
-            <span>авторизовано игроков</span>
-        </article>
-        <article class="summary-card">
-            <small>MATCHES</small>
-            <strong id="summary-matches">—</strong>
-            <span>завершённых дуэлей</span>
-        </article>
-        <article class="summary-card featured">
-            <small>TOP PLAYER</small>
-            <strong id="summary-top">—</strong>
-            <span id="summary-top-sub">пока нет данных</span>
-        </article>
-    </section>
-
-    <section class="data-panel">
-        <div class="panel-head">
-            <div>
-                <div class="eyebrow"><span></span> RANKING</div>
-                <h2>Лидерборд</h2>
-            </div>
-            <span>Сортировка по победам и winrate</span>
-        </div>
-
-        <div class="table-wrap">
-            <table class="stats-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Игрок</th>
-                        <th>Матчи</th>
-                        <th>W</th>
-                        <th>L</th>
-                        <th>WR</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboard-body">
-                    <tr><td colspan="6">Загрузка...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="data-panel">
-        <div class="panel-head">
-            <div>
-                <div class="eyebrow"><span></span> HISTORY</div>
-                <h2>Последние матчи</h2>
-            </div>
-            <span>Кто победил, кого и с каким результатом</span>
-        </div>
-
-        <div class="match-list" id="match-list">
-            <div class="empty-state">Загрузка истории...</div>
-        </div>
-    </section>
+    <a class="back-link" href="{{ url_for('index') }}"><span>←</span><span data-i18n="nav.back">Back to hub</span></a>
+    <section class="stats-heading"><span class="eyebrow" data-i18n="stats.global">GLOBAL STATS</span><h1 data-i18n="nav.stats">Statistics</h1><p data-i18n="stats.description">Recent duels, leaderboard and player records.</p></section>
+    <section class="stats-summary"><article><span data-i18n="stats.players">Players</span><strong id="summary-players">—</strong></article><article><span data-i18n="stats.matches">Matches</span><strong id="summary-matches">—</strong></article><article class="top-player-card"><span data-i18n="stats.topPlayer">Top player</span><strong id="summary-top">—</strong><small id="summary-top-sub"></small></article></section>
+    <section class="data-panel"><div class="panel-heading"><span class="eyebrow" data-i18n="stats.ranking">RANKING</span><h2 data-i18n="stats.leaderboard">Leaderboard</h2></div><div class="table-wrap"><table class="stats-table"><thead><tr><th>#</th><th data-i18n="stats.player">Player</th><th data-i18n="stats.matches">Matches</th><th>W</th><th>L</th><th>WR</th></tr></thead><tbody id="leaderboard-body"><tr><td colspan="6">...</td></tr></tbody></table></div></section>
+    <section class="data-panel"><div class="panel-heading"><span class="eyebrow" data-i18n="stats.history">HISTORY</span><h2 data-i18n="stats.recent">Recent matches</h2></div><div class="match-list" id="match-list"></div></section>
 </main>
 {% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/stats.js') }}"></script>
-{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/stats.js') }}"></script>{% endblock %}
