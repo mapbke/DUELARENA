@@ -7,6 +7,7 @@ import threading
 import time
 import uuid
 from functools import wraps
+from collections import defaultdict, deque
 from urllib.parse import urlencode
 
 import requests
@@ -27,18 +28,22 @@ from database import (
 load_dotenv()
 
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:5000").rstrip("/")
-SECRET_KEY = os.getenv("SECRET_KEY", "duoarena-v6-dev-secret-change-me")
+SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+if BASE_URL.startswith("https://") and not os.getenv("SECRET_KEY"):
+    raise RuntimeError("Set a stable SECRET_KEY for production")
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
 ROUND_COUNTDOWN = float(os.getenv("ROUND_COUNTDOWN", "2.5"))
-RECONNECT_GRACE = float(os.getenv("RECONNECT_GRACE", "15"))
+RECONNECT_GRACE = float(os.getenv("RECONNECT_GRACE", "60"))
+ROOM_TTL = float(os.getenv("ROOM_TTL", "7200"))
 
 app = Flask(__name__)
 app.config.update(
     SECRET_KEY=SECRET_KEY,
+    MAX_CONTENT_LENGTH=16384,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=BASE_URL.startswith("https://"),
@@ -53,12 +58,14 @@ socketio = SocketIO(
         "http://localhost:5000",
     ],
     async_mode="threading",
+    max_http_buffer_size=16384,
 )
 
 init_database()
 
 LOCK = threading.RLock()
 ROOMS = {}
+RATE_BUCKETS = defaultdict(deque)
 
 RULE = {
     "reaction": "min",
@@ -167,17 +174,18 @@ def current_user():
     if not user:
         return None
 
-    try:
-        persist_user(user)
-    except Exception:
-        app.logger.exception("Failed to persist user")
+    if not hasattr(request, "sid"):
+        try:
+            persist_user(user)
+        except Exception:
+            app.logger.exception("Failed to persist user")
 
     session["user"] = user
     return user
 
 
 def safe_next(value):
-    if not value or not value.startswith("/") or value.startswith("//"):
+    if not value or not value.startswith("/") or value.startswith("//") or "\\" in value or any(ord(c) < 32 for c in value):
         return "/"
     return value
 
@@ -245,6 +253,8 @@ def public_room(code):
             "mode_name": MODE_NAME[room["mode"]],
             "state": room["state"],
             "round": room["round"],
+            "notice": room.get("notice"),
+            "last_result": room.get("last_result") if room["state"] == "finished" else None,
             "invite_url": f"{BASE_URL}/r/{code}",
             "players": [public_player(p) for p in room["players"].values()],
         }
@@ -270,6 +280,7 @@ def reset_round(room):
     room["started_at"] = None
     room["go_at"] = None
     room["game_data"] = {}
+    room["last_result"] = None
 
     for p in room["players"].values():
         p["ready"] = False
@@ -298,6 +309,8 @@ def remove_player(user_id, code=None):
             return {"room": code, "removed": removed, "deleted": True}
 
         reset_round(room)
+        room["notice"] = "opponent_left"
+        app.logger.info("player_left room=%s", code)
         return {"room": code, "removed": removed, "deleted": False}
 
 
@@ -347,8 +360,63 @@ def reconnect_cleanup(user_id, code, sid):
             and not player.get("connected")
         )
 
-    if remove:
-        notify_removed(remove_player(user_id, code))
+        if remove:
+            notify_removed(remove_player(user_id, code))
+
+
+def expire_rooms():
+    now = time.monotonic()
+    with LOCK:
+        for code, room in list(ROOMS.items()):
+            if now - room.get("created_at", now) >= ROOM_TTL:
+                socketio.emit("room_expired", {"room": code}, to=code)
+                socketio.close_room(code)
+                del ROOMS[code]
+                app.logger.info("room_closed reason=expired room=%s", code)
+        for key, times in list(RATE_BUCKETS.items()):
+            if not times or times[-1] < now - 60:
+                del RATE_BUCKETS[key]
+
+
+def room_sweeper():
+    while True:
+        socketio.sleep(30)
+        expire_rooms()
+
+
+def socket_guard(action, member=False):
+    """Serialize state mutations and authorize the currently attached socket."""
+    def decorate(fn):
+        @wraps(fn)
+        def guarded(data=None):
+            with LOCK:
+                user = normalize_user(session.get("user"))
+                if not user:
+                    return emit("room_error", {"code": "authentication_required"})
+                if data is not None and not isinstance(data, dict):
+                    return emit("room_error", {"code": "invalid_payload"})
+                if member:
+                    code = find_room(user["user_id"])
+                    room = ROOMS.get(code)
+                    player = room["players"].get(user["user_id"]) if room else None
+                    if not player or not player["connected"] or player["sid"] != request.sid:
+                        return emit("room_error", {"code": "not_in_room"})
+                if action in {"create", "join"}:
+                    expire_rooms()
+                    now = time.monotonic()
+                    key = (request.remote_addr, action)
+                    times = RATE_BUCKETS[key]
+                    while times and times[0] < now - 60:
+                        times.popleft()
+                    if len(times) >= (20 if action == "create" else 60):
+                        return emit("room_error", {"code": "rate_limited"})
+                    times.append(now)
+                try:
+                    return fn(data)
+                except (TypeError, ValueError, OverflowError):
+                    return emit("room_error", {"code": "invalid_payload"})
+        return guarded
+    return decorate
 
 
 # ---------------- round engine ----------------
@@ -359,6 +427,8 @@ def prepare_round(code):
         if not room or room["state"] not in {"lobby", "finished"} or not both_ready(room):
             return
 
+        room["notice"] = None
+        room["last_result"] = None
         room["state"] = "countdown"
         room["round"] += 1
         room["token"] = secrets.token_urlsafe(18)
@@ -559,6 +629,8 @@ def finalize(code, token):
             }
 
         room["state"] = "finished"
+        room["last_result"] = result
+        app.logger.info("round_finished room=%s round=%s", code, room["round"])
 
         for p in room["players"].values():
             p["ready"] = False
@@ -670,7 +742,7 @@ def invite(code):
             room_code=code,
         ), 404
 
-    return redirect(url_for(MODE_ROUTE[mode], room=code))
+    return render_game(f"{mode}.html")
 
 
 @app.get("/health")
@@ -924,19 +996,26 @@ def on_disconnect(reason=None):
 
         player["connected"] = False
         player["ready"] = False
+        if room["state"] in {"playing", "countdown"}:
+            reset_round(room)
+            room["notice"] = "round_interrupted"
+        app.logger.info("player_disconnected room=%s", code)
 
     emit_room(code)
     socketio.start_background_task(reconnect_cleanup, user["user_id"], code, sid)
 
 
 @socketio.on("room_create")
+@socket_guard("create", member=False)
 def on_room_create(data=None):
     user = current_user()
     if not user:
         return emit("room_error", {"code": "authentication_required"})
 
     data = data or {}
-    mode = ensure_mode(data.get("mode"))
+    if data.get("mode") not in RULE:
+        return emit("room_error", {"code": "invalid_payload"})
+    mode = data["mode"]
     language = "ru" if data.get("language") == "ru" else "en"
 
     old = find_room(user["user_id"])
@@ -951,6 +1030,7 @@ def on_room_create(data=None):
 
     with LOCK:
         ROOMS[code] = {
+            "created_at": time.monotonic(),
             "mode": mode,
             "language": language,
             "state": "lobby",
@@ -977,11 +1057,13 @@ def on_room_create(data=None):
         }
 
     join_room(code)
+    app.logger.info("room_created room=%s mode=%s", code, mode)
     emit("room_created", {"room": code, "invite_url": f"{BASE_URL}/r/{code}"})
     emit_room(code)
 
 
 @socketio.on("room_join")
+@socket_guard("join", member=False)
 def on_room_join(data=None):
     user = current_user()
     if not user:
@@ -989,16 +1071,8 @@ def on_room_join(data=None):
 
     code = str((data or {}).get("room") or "").upper().strip()
 
-    if len(code) != 5:
+    if not re.fullmatch(r"[A-HJ-NP-Z2-9]{5}", code):
         return emit("room_error", {"code": "invalid_room_code"})
-
-    old = find_room(user["user_id"])
-    if old and old != code:
-        try:
-            leave_room(old)
-        except Exception:
-            pass
-        notify_removed(remove_player(user["user_id"], old))
 
     with LOCK:
         room = ROOMS.get(code)
@@ -1009,12 +1083,28 @@ def on_room_join(data=None):
         if room["state"] in {"countdown", "playing"} and user["user_id"] not in room["players"]:
             return emit("room_error", {"code": "round_in_progress"})
 
+        if user["user_id"] not in room["players"] and len(room["players"]) >= 2:
+            return emit("room_error", {"code": "room_full"})
+
+        old = find_room(user["user_id"])
+        if old and old != code:
+            try:
+                leave_room(old)
+            except Exception:
+                pass
+            notify_removed(remove_player(user["user_id"], old))
+
         player = room["players"].get(user["user_id"])
 
         if player:
+            if player["sid"] != request.sid:
+                socketio.server.leave_room(player["sid"], code, namespace="/")
+                if room["state"] in {"playing", "countdown"}:
+                    reset_round(room)
+                    room["notice"] = "round_interrupted"
             player["sid"] = request.sid
             player["connected"] = True
-            player["ready"] = False
+            app.logger.info("player_reconnected room=%s", code)
         else:
             if len(room["players"]) >= 2:
                 return emit("room_error", {"code": "room_full"})
@@ -1039,12 +1129,13 @@ def on_room_join(data=None):
     emit("room_joined", {
         "room": code,
         "mode": mode,
-        "redirect_url": url_for(MODE_ROUTE[mode], room=code),
+        "redirect_url": url_for("invite", code=code),
     })
     emit_room(code)
 
 
 @socketio.on("room_leave")
+@socket_guard("leave", member=True)
 def on_room_leave(data=None):
     user = current_user()
     if not user:
@@ -1064,6 +1155,7 @@ def on_room_leave(data=None):
 
 
 @socketio.on("room_ready")
+@socket_guard("ready", member=True)
 def on_room_ready(data=None):
     user = current_user()
     if not user:
@@ -1093,6 +1185,7 @@ def on_room_ready(data=None):
 
 
 @socketio.on("reaction_click")
+@socket_guard("reaction", member=True)
 def on_reaction_click(data=None):
     user = current_user()
     code = find_room(user["user_id"]) if user else None
@@ -1134,6 +1227,7 @@ def on_reaction_click(data=None):
 
 
 @socketio.on("typing_progress")
+@socket_guard("typing", member=True)
 def on_typing_progress(data=None):
     user = current_user()
     code = find_room(user["user_id"]) if user else None
@@ -1162,6 +1256,7 @@ def on_typing_progress(data=None):
 
 
 @socketio.on("typing_finish")
+@socket_guard("typing", member=True)
 def on_typing_finish(data=None):
     user = current_user()
     code = find_room(user["user_id"]) if user else None
@@ -1182,6 +1277,8 @@ def on_typing_finish(data=None):
             return
 
         phrase = room["game_data"].get("phrase", "")
+        if len(text) != len(phrase) or time.perf_counter() - room["started_at"] > TIMEOUT["typing"]:
+            return emit("room_error", {"code": "invalid_payload"})
         typed = text[:len(phrase)]
         elapsed = max(.1, time.perf_counter() - room["started_at"])
 
@@ -1219,6 +1316,7 @@ def on_typing_finish(data=None):
 
 
 @socketio.on("cps_click")
+@socket_guard("cps", member=True)
 def on_cps_click(data=None):
     user = current_user()
     code = find_room(user["user_id"]) if user else None
@@ -1243,6 +1341,7 @@ def on_cps_click(data=None):
 
 
 @socketio.on("aim_hit")
+@socket_guard("aim", member=True)
 def on_aim_hit(data=None):
     user = current_user()
     code = find_room(user["user_id"]) if user else None
@@ -1261,6 +1360,8 @@ def on_aim_hit(data=None):
         p = room["players"].get(user["user_id"])
         targets = room["game_data"].get("targets", [])
 
+        if time.perf_counter() - room["started_at"] > TIMEOUT["aim"]:
+            return
         if not p or p["done"] or index != p["aim_index"] or index >= len(targets):
             return
 
@@ -1289,6 +1390,7 @@ def on_aim_hit(data=None):
 
 
 @socketio.on("blind_stop")
+@socket_guard("blind", member=True)
 def on_blind_stop(data=None):
     user = current_user()
     code = find_room(user["user_id"]) if user else None
@@ -1329,11 +1431,13 @@ def on_blind_stop(data=None):
     finalize(code, token)
 
 
+socketio.start_background_task(room_sweeper)
+
 if __name__ == "__main__":
     socketio.run(
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "5000")),
-        debug=os.getenv("FLASK_DEBUG", "1") == "1",
+        debug=os.getenv("FLASK_DEBUG", "0") == "1",
         allow_unsafe_werkzeug=True,
     )

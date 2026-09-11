@@ -141,6 +141,10 @@
         }
     });
 
+    window.addEventListener("duo:round-cancelled", () => {
+        token = null;
+        input.disabled = true;
+    });
     window.addEventListener("duo:round-result", () => {
         token = null;
         input.disabled = true;

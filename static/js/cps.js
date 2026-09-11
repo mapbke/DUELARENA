@@ -63,10 +63,19 @@
         socket.emit("cps_click",{token});
     });
 
+    window.addEventListener("duo:round-cancelled", () => {
+        token = null;
+        active = false;
+        zone.disabled = true;
+        if (raf) cancelAnimationFrame(raf);
+    });
     window.addEventListener("duo:round-result", () => {
         token = null;
         active = false;
         zone.disabled = true;
         if (raf) cancelAnimationFrame(raf);
+    });
+    zone.addEventListener("click", event => {
+        if (event.detail === 0) zone.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true}));
     });
 })();

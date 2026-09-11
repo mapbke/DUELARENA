@@ -14,7 +14,7 @@
 - Новый единый room flow:
   `lobby -> countdown -> playing -> finished -> rematch`.
 - Серия побед внутри одной комнаты.
-- 15 секунд grace period для reconnect.
+- 60 секунд grace period для reconnect.
 
 ## Ссылка-приглашение
 
@@ -79,34 +79,25 @@ GitHub:
 Google:
 `https://duoarena.onrender.com/auth/google/callback`
 
-## Deploy
+## Проверка перед деплоем
 
-Полностью заменить текущий проект содержимым архива.
+Изменения v6 находятся в отдельной ветке. Полный аудит, протокол и ограничения: [QA_V6.md](QA_V6.md).
 
 ```bash
-git add .
-git commit -m "DuoArena V6 complete rebuild"
-git push origin main
+python -m unittest discover -s tests -v
+node --test tests/room-client.test.cjs
+python -m pip install websocket-client
+python tests/gunicorn_smoke.py
 ```
+
+После автоматических проверок нужен прогон в двух независимых браузерах на тестовом Render-сервисе. Основной сервис не обновлялся в рамках этого исправления.
+
+## Восстановление соединения
+
+При обрыве связи во время раунда сервер отменяет его для обоих игроков, сохраняя комнату и счёт серии. После возврата оба снова нажимают «Готов». Окно возврата — 60 секунд (`RECONNECT_GRACE`), срок жизни комнаты — два часа (`ROOM_TTL`). После перезапуска процесса комнаты исчезают.
 
 ## Render Free
 
-Активные комнаты пока хранятся в RAM и исчезают после рестарта инстанса.
-SQLite также не является постоянным хранилищем без persistent disk.
+Оставьте **один** Gunicorn worker. Несколько workers/инстансов не разделяют комнаты в памяти. SQLite не является постоянным хранилищем без persistent disk. Для сохранения истории между деплоями потребуется постоянное хранилище.
 
-Если проект пойдёт в публичный запуск, следующий инфраструктурный шаг — Postgres + Redis.
-
-## QA перед упаковкой
-
-Проверено автоматически:
-
-- Python syntax compile;
-- все Jinja templates парсятся;
-- весь JavaScript проходит `node --check`;
-- все `getElementById()` указывают на реально существующие элементы;
-- все клиентские `socket.emit()` имеют backend handler;
-- invite flow `/r/<code>` сохраняет `next` через login и ведёт в правильный mode;
-- favicon SVG + PNG 192/512 присутствуют;
-- минимальный явный `font-size` в UI — 10px, основной body — 16px.
-
-Runtime integration test в среде сборки не запускается, потому что в ней нет установленных Flask/Flask-SocketIO packages. На Render они устанавливаются из `requirements.txt`.
+`SECRET_KEY` должен быть задан стабильным значением через окружение. Не храните его в Git. Debug по умолчанию отключён.

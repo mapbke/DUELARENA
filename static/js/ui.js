@@ -6,9 +6,9 @@
             "nav.stats":"Статистика","nav.logout":"Выйти","nav.back":"На главную",
 
             "login.kicker":"ПРИВАТНЫЕ 1V1 ИГРЫ В БРАУЗЕРЕ",
-            "login.title1":"Позови друга.","login.title2":"Докажи результат.",
+            "login.title1":"Позови друга.","login.title2":"Сыграйте дуэль.",
             "login.description":"Пять быстрых соревновательных режимов, приватные комнаты и мгновенные реванши.",
-            "login.point1":"Без установки","login.point2":"Приватные ссылки","login.point3":"Серверные раунды",
+            "login.point1":"Без установки","login.point2":"Приватные ссылки","login.point3":"Пять игр на двоих",
             "login.welcome":"Добро пожаловать в DuoArena","login.choose":"Выбери способ входа.",
             "login.google":"Продолжить с Google","login.github":"Продолжить с GitHub","login.or":"или",
             "login.guestName":"Имя гостя","login.guestPlaceholder":"Твой ник","login.guest":"Играть как гость",
@@ -16,15 +16,15 @@
 
             "home.eyebrow":"ПРИВАТНАЯ 1V1 АРЕНА","home.title1":"Выбери дуэль.","home.title2":"Отправь ссылку. Играй.",
             "home.description":"Создай приватную комнату, скопируй ссылку — соперник автоматически попадёт в нужную игру.",
-            "home.modesEyebrow":"РЕЖИМЫ","home.modesTitle":"Выбери арену","home.modesHint":"Во всех режимах одинаковая логика комнаты и реванша.",
+            "home.modesEyebrow":"РЕЖИМЫ","home.modesTitle":"Выбери арену","home.modesHint":"Выбирай игру и зови друга по ссылке.",
 
             "stats.wins":"Победы","stats.losses":"Поражения","stats.winrate":"Винрейт",
 
-            "mode.reaction.tag":"РЕАКЦИЯ","mode.reaction.name":"Reaction Duel","mode.reaction.desc":"Сигнал приходит с сервера. Ранний клик считается фальстартом.","mode.reaction.rule":"Меньше ms",
-            "mode.typing.tag":"ПЕЧАТЬ","mode.typing.name":"Typing Duel","mode.typing.desc":"Случайный текст от сервера, живой прогресс и WPM с учётом точности.","mode.typing.rule":"Больше итоговый WPM",
-            "mode.cps.tag":"КЛИКИ","mode.cps.name":"CPS Battle","mode.cps.desc":"Сервер открывает окно ровно на десять секунд и считает каждый валидный клик.","mode.cps.rule":"Больше кликов",
-            "mode.aim.tag":"АИМ","mode.aim.name":"Aim Duel","mode.aim.desc":"Оба игрока получают одинаковую последовательность целей от сервера.","mode.aim.rule":"Быстрее темп",
-            "mode.blind.tag":"ТАЙМИНГ","mode.blind.name":"Blind Timing","mode.blind.desc":"Сервер измеряет, насколько близко ты остановился к пяти секундам.","mode.blind.rule":"Меньше ошибка",
+            "mode.reaction.tag":"РЕАКЦИЯ","mode.reaction.name":"Reaction Duel","mode.reaction.desc":"Жди зелёного сигнала. Кто нажмёт быстрее? Ранний клик — фальстарт.","mode.reaction.rule":"Быстрее реакция",
+            "mode.typing.tag":"ПЕЧАТЬ","mode.typing.name":"Typing Duel","mode.typing.desc":"Напечатай текст быстрее соперника. Ошибки снижают результат.","mode.typing.rule":"Скорость и точность",
+            "mode.cps.tag":"КЛИКИ","mode.cps.name":"CPS Battle","mode.cps.desc":"Десять секунд. Одна кнопка. У кого больше кликов?","mode.cps.rule":"Больше кликов",
+            "mode.aim.tag":"АИМ","mode.aim.name":"Aim Duel","mode.aim.desc":"Попади по 15 мишеням быстрее соперника.","mode.aim.rule":"Быстрее темп",
+            "mode.blind.tag":"ТАЙМИНГ","mode.blind.name":"Blind Timing","mode.blind.desc":"Остановись ровно на пяти секундах. Таймер исчезнет — доверься чувству времени.","mode.blind.rule":"Меньше ошибка",
 
             "room.eyebrow":"ПРИВАТНАЯ КОМНАТА","room.title":"Создай комнату или войди по коду","room.code":"Код",
             "room.create":"Создать комнату","room.createHint":"Получишь ссылку-приглашение и короткий код.","room.or":"или войди по коду",
@@ -36,10 +36,10 @@
             "room.series":"Серия: {wins}",
 
             "round.getReady":"ПРИГОТОВЬСЯ","game.locked":"Сначала подключись к комнате","game.lockedHint":"Игра откроется, когда оба игрока будут готовы.",
-            "reaction.waiting":"ОЖИДАНИЕ","reaction.hint":"Не кликай раньше зелёного.","reaction.wait":"ЖДИ...","reaction.falseHint":"Клик сейчас — фальстарт.",
-            "reaction.go":"КЛИКАЙ!","reaction.sent":"РЕЗУЛЬТАТ ОТПРАВЛЕН","reaction.false":"ФАЛЬСТАРТ",
+            "reaction.waiting":"ОЖИДАНИЕ","reaction.hint":"Не кликай раньше зелёного.","reaction.wait":"Жди сигнала","reaction.falseHint":"Клик сейчас — фальстарт.",
+            "reaction.go":"ЖМИ!","reaction.sent":"Ждём соперника","reaction.false":"ФАЛЬСТАРТ",
             "typing.placeholder":"Жди начала раунда","typing.playPlaceholder":"Печатай текст выше...","typing.accuracy":"Точность","typing.progress":"Прогресс",
-            "cps.time":"ОСТАЛОСЬ","cps.waiting":"ОЖИДАНИЕ","cps.click":"КЛИКАЙ!","cps.clicks":"Клики",
+            "cps.time":"ОСТАЛОСЬ","cps.waiting":"ОЖИДАНИЕ","cps.click":"ЖМИ!","cps.clicks":"Клики",
             "aim.targets":"Цели","aim.time":"Время",
             "blind.goal":"ЦЕЛЬ","blind.waiting":"ОЖИДАНИЕ","blind.stop":"СТОП",
 
@@ -61,9 +61,9 @@
             "settings.language":"Language","settings.theme":"Theme","theme.system":"System","theme.dark":"Dark","theme.light":"Light",
             "nav.stats":"Statistics","nav.logout":"Log out","nav.back":"Back to hub",
 
-            "login.kicker":"PRIVATE 1V1 BROWSER GAMES","login.title1":"Challenge a friend.","login.title2":"Prove the result.",
+            "login.kicker":"PRIVATE 1V1 BROWSER GAMES","login.title1":"Challenge a friend.","login.title2":"Play a duel.",
             "login.description":"Five fast competitive modes, private rooms and instant rematches.",
-            "login.point1":"No installation","login.point2":"Private invite links","login.point3":"Server-controlled rounds",
+            "login.point1":"No installation","login.point2":"Private invite links","login.point3":"Five games for two",
             "login.welcome":"Welcome to DuoArena","login.choose":"Choose how you want to continue.",
             "login.google":"Continue with Google","login.github":"Continue with GitHub","login.or":"or",
             "login.guestName":"Guest name","login.guestPlaceholder":"Your nickname","login.guest":"Play as Guest",
@@ -71,15 +71,15 @@
 
             "home.eyebrow":"PRIVATE 1V1 ARENA","home.title1":"Pick the duel.","home.title2":"Send the link. Play.",
             "home.description":"Create a private room, copy the invite link and your opponent joins the correct game automatically.",
-            "home.modesEyebrow":"GAME MODES","home.modesTitle":"Choose an arena","home.modesHint":"Every mode uses the same room and rematch flow.",
+            "home.modesEyebrow":"GAME MODES","home.modesTitle":"Choose an arena","home.modesHint":"Choose a game and invite a friend.",
 
             "stats.wins":"Wins","stats.losses":"Losses","stats.winrate":"Winrate",
 
-            "mode.reaction.tag":"REACTION","mode.reaction.name":"Reaction Duel","mode.reaction.desc":"The signal comes from the server. An early click is a false start.","mode.reaction.rule":"Lowest ms",
-            "mode.typing.tag":"TYPING","mode.typing.name":"Typing Duel","mode.typing.desc":"Random server phrase, live progress and accuracy-adjusted WPM.","mode.typing.rule":"Highest final WPM",
-            "mode.cps.tag":"CLICKS","mode.cps.name":"CPS Battle","mode.cps.desc":"The server opens a ten-second click window and counts every valid click.","mode.cps.rule":"Most clicks",
-            "mode.aim.tag":"AIM","mode.aim.name":"Aim Duel","mode.aim.desc":"Both players receive the same server-generated target sequence.","mode.aim.rule":"Fastest pace",
-            "mode.blind.tag":"TIMING","mode.blind.name":"Blind Timing","mode.blind.desc":"The server measures how close your stop is to exactly five seconds.","mode.blind.rule":"Lowest error",
+            "mode.reaction.tag":"REACTION","mode.reaction.name":"Reaction Duel","mode.reaction.desc":"Wait for green. Who reacts first? An early click is a false start.","mode.reaction.rule":"Lowest ms",
+            "mode.typing.tag":"TYPING","mode.typing.name":"Typing Duel","mode.typing.desc":"Type faster than your opponent. Mistakes reduce your score.","mode.typing.rule":"Highest final WPM",
+            "mode.cps.tag":"CLICKS","mode.cps.name":"CPS Battle","mode.cps.desc":"Ten seconds. One button. Who can click the most?","mode.cps.rule":"Most clicks",
+            "mode.aim.tag":"AIM","mode.aim.name":"Aim Duel","mode.aim.desc":"Hit all 15 targets faster than your opponent.","mode.aim.rule":"Fastest pace",
+            "mode.blind.tag":"TIMING","mode.blind.name":"Blind Timing","mode.blind.desc":"Stop at exactly five seconds. The clock disappears — trust your timing.","mode.blind.rule":"Lowest error",
 
             "room.eyebrow":"PRIVATE ROOM","room.title":"Create a room or join by code","room.code":"Code",
             "room.create":"Create room","room.createHint":"You will get an invite link and a short room code.","room.or":"or join by code",

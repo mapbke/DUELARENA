@@ -59,6 +59,13 @@
         }
     });
 
+    window.addEventListener("duo:round-cancelled", () => {
+        token = null;
+        active = false;
+        button.disabled = true;
+        if (raf) cancelAnimationFrame(raf);
+        clearTimeout(hideTimer);
+    });
     window.addEventListener("duo:round-result", () => {
         token = null;
         active = false;

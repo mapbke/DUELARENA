@@ -59,6 +59,11 @@
         }
     });
 
+    window.addEventListener("duo:round-cancelled", () => {
+        token = null; sent = false; zone.disabled = true;
+        zone.className = "reaction-zone";
+        main.textContent = t("reaction.waiting"); sub.textContent = t("reaction.hint");
+    });
     window.addEventListener("duo:round-result", event => {
         const players = event.detail.players || [];
 
@@ -76,5 +81,8 @@
         zone.className = "reaction-zone";
         main.textContent = t("reaction.waiting");
         sub.textContent = t("reaction.hint");
+    });
+    zone.addEventListener("click", event => {
+        if (event.detail === 0) zone.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true}));
     });
 })();

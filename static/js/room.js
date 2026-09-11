@@ -4,6 +4,34 @@
 
     const socket = window.socket;
     const mode = panel.dataset.mode;
+    const initialCode = (location.pathname.match(/^\/r\/([^/]+)$/)?.[1] || new URLSearchParams(location.search).get("room") || "").trim().toUpperCase();
+    let desiredCode = initialCode;
+    let pending = false, pendingTimer = null;
+    const errorBox = document.getElementById("room-error");
+    const ru = () => window.DuoUI?.language === "ru";
+    function message(code) {
+        const custom = {
+            invalid_payload: ["Некорректное действие. Попробуй ещё раз.", "Invalid action. Try again."],
+            rate_limited: ["Слишком много попыток. Подожди минуту.", "Too many attempts. Wait a minute."],
+            network: ["Соединение потеряно. Переподключаемся…", "Connection lost. Reconnecting…"],
+            expired: ["Комната больше не активна. Создай новую игру.", "This room is no longer active. Create a new game."],
+            round_interrupted: ["Раунд отменён из-за обрыва связи. Нажмите «Готов», когда оба вернутся.", "Round cancelled after a disconnect. Ready up when both players return."],
+            opponent_left: ["Соперник вышел. Отправь ссылку, чтобы пригласить игрока.", "Opponent left. Share the link to invite a player."],
+        };
+        return custom[code]?.[ru() ? 0 : 1] || t(`error.${code}`);
+    }
+    function endPending() {
+        pending = false; clearTimeout(pendingTimer);
+        createButton.disabled = joinButton.disabled = !socket.connected;
+    }
+    function send(event, data) {
+        if (pending || !socket.connected) return;
+        pending = true;
+        errorBox.textContent = ru() ? "Подключение…" : "Connecting…";
+        createButton.disabled = joinButton.disabled = true;
+        socket.emit(event, data);
+        pendingTimer = setTimeout(() => { endPending(); errorBox.textContent = message("network"); }, 10000);
+    }
     const t = (key,vars) => window.DuoUI?.t(key,vars) || key;
 
     const entry = document.getElementById("room-entry");
@@ -89,13 +117,14 @@
     }
 
     function updateUrl(code) {
-        const url = new URL(location.href);
-        if (code) url.searchParams.set("room",code);
-        else url.searchParams.delete("room");
-        history.replaceState({},"",url);
+        history.replaceState({}, "", code ? `/r/${code}` : `/${mode}`);
     }
 
-    function showEntry() {
+    function showEntry(clearUrl = true) {
+        endPending();
+        countdownOverlay.classList.add("hidden");
+        resultOverlay.classList.add("hidden");
+        window.dispatchEvent(new CustomEvent("duo:round-cancelled"));
         state.room = null;
         state.roomData = null;
         state.token = null;
@@ -108,11 +137,19 @@
         readyButton.classList.add("hidden");
         readyButton.disabled = false;
         readyButton.textContent = t("room.ready");
-        updateUrl(null);
+        state.lastResult = null;
+        if (clearUrl) { desiredCode = ""; updateUrl(null); }
         lockSurface();
     }
 
     function renderRoom(room) {
+        endPending(); errorBox.textContent = "";
+        if (room.state === "lobby" && (state.playing || state.token)) {
+            state.playing = false; state.token = null;
+            countdownOverlay.classList.add("hidden");
+            resultOverlay.classList.add("hidden");
+            window.dispatchEvent(new CustomEvent("duo:round-cancelled"));
+        }
         state.room = room.room;
         state.roomData = room;
 
@@ -161,13 +198,19 @@
             lockSurface();
         }
 
+        if (room.notice && room.state === "lobby") status.textContent = message(room.notice);
+        if (room.last_result && !state.lastResult) {
+            showResult(room.last_result);
+            state.lastResult = room.last_result.round;
+        }
         updateUrl(room.room);
         window.dispatchEvent(new CustomEvent("duo:room-state",{detail:room}));
     }
 
     function score(modeName,value,meta={}) {
+        if (meta.timeout) return ru() ? "Время вышло" : "Timed out";
         const n = Number(value);
-        if (modeName === "reaction") return meta.false_start || n >= 999999 ? "FALSE START" : `${n.toFixed(0)} ms`;
+        if (modeName === "reaction") return meta.false_start || n >= 999999 ? (ru() ? "Фальстарт" : "False start") : `${n.toFixed(0)} ms`;
         if (modeName === "typing") return `${n.toFixed(1)} WPM`;
         if (modeName === "cps") return `${n.toFixed(0)} clicks`;
         if (modeName === "aim") return `${n.toFixed(3)} t/s`;
@@ -209,8 +252,10 @@
         countdownOverlay.classList.remove("hidden");
         const started = performance.now();
         const duration = Math.max(0,Number(seconds) * 1000);
+        const token = state.token;
 
         function frame(now) {
+            if (token !== state.token) return;
             const left = Math.max(0,duration - (now-started));
             countdownValue.textContent = String(Math.max(1,Math.ceil(left/1000)));
             if (left <= 0) {
@@ -223,14 +268,15 @@
     }
 
     createButton.addEventListener("click",() => {
-        createButton.disabled = true;
-        socket.emit("room_create",{mode,language:window.DuoUI?.language || "en"});
-        setTimeout(() => createButton.disabled = false,800);
+        send("room_create",{mode,language:window.DuoUI?.language || "en"});
     });
 
     joinButton.addEventListener("click",() => {
         const code = input.value.trim().toUpperCase();
-        if (code) socket.emit("room_join",{room:code});
+        if (!/^[A-HJ-NP-Z2-9]{5}$/.test(code)) {
+            errorBox.textContent = message("invalid_room_code"); return;
+        }
+        send("room_join",{room:code});
     });
 
     input.addEventListener("input",() => {
@@ -282,17 +328,20 @@
         if (room.mode === mode) renderRoom(room);
     });
 
-    socket.on("room_left",showEntry);
+    socket.on("room_left",() => showEntry());
+    socket.on("room_expired", () => { showEntry(); errorBox.textContent = message("expired"); });
 
     socket.on("room_error",data => {
-        const message = t(`error.${data.code}`);
-        if (state.room) status.textContent = message;
-        else alert(message);
+        endPending();
+        errorBox.textContent = message(data.code);
+        if (state.room) status.textContent = message(data.code);
         readyButton.disabled = false;
     });
 
     socket.on("round_countdown",data => {
         if (data.mode !== mode) return;
+        state.lastResult = null;
+        resultOverlay.classList.add("hidden");
         state.token = data.token;
         showCountdown(data.seconds);
         unlockSurface();
@@ -302,6 +351,7 @@
     socket.on("round_start",data => {
         if (data.mode !== mode) return;
         state.token = data.token;
+        countdownOverlay.classList.add("hidden");
         state.playing = true;
         unlockSurface();
         window.dispatchEvent(new CustomEvent("duo:round-start",{detail:data}));
@@ -311,6 +361,7 @@
         if (data.mode !== mode) return;
         state.playing = false;
         state.token = null;
+        state.lastResult = data.round;
         showResult(data);
         window.dispatchEvent(new CustomEvent("duo:round-result",{detail:data}));
     });
@@ -323,13 +374,27 @@
     }
 
     async function autoJoin() {
-        await ensureUser();
-        const code = new URLSearchParams(location.search).get("room");
-        if (code?.length === 5) {
-            input.value = code.toUpperCase();
-            socket.emit("room_join",{room:code.toUpperCase()});
-        }
+        endPending();
+        try {
+            await ensureUser();
+            const code = state.room || desiredCode;
+            if (code) { input.value = code; send("room_join", {room:code}); }
+        } catch { errorBox.textContent = message("network"); }
     }
+
+    window.addEventListener("duo:socket-disconnected", () => {
+        pending = false; clearTimeout(pendingTimer);
+        createButton.disabled = joinButton.disabled = readyButton.disabled = true;
+        state.playing = false; state.token = null;
+        countdownOverlay.classList.add("hidden");
+        errorBox.textContent = message("network");
+        lockSurface();
+        window.dispatchEvent(new CustomEvent("duo:round-cancelled"));
+    });
+
+    window.addEventListener("duo:reconnect-failed", () => {
+        errorBox.textContent = ru() ? "Не удалось восстановить соединение. Обнови страницу или вернись к играм." : "Could not reconnect. Reload this page or return to the games.";
+    });
 
     window.addEventListener("duo:language",() => {
         if (state.roomData) renderRoom(state.roomData);
@@ -337,8 +402,7 @@
         copyInvite.textContent = t("room.copyLink");
     });
 
+    showEntry(false);
+    window.addEventListener("duo:socket-connected",autoJoin);
     if (socket.connected) autoJoin();
-    else window.addEventListener("duo:socket-connected",autoJoin,{once:true});
-
-    showEntry();
 })();

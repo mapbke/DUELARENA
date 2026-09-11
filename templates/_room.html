@@ -10,6 +10,7 @@
         </div>
     </div>
 
+    <p id="room-error" class="room-error" role="status" aria-live="polite"></p>
     <div class="room-entry" id="room-entry">
         <button class="create-room" id="create-room" type="button">
             <span>+</span>
@@ -23,7 +24,7 @@
         <div class="or-line"><span data-i18n="room.or">or join by code</span></div>
 
         <div class="join-row">
-            <input id="room-input" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ABCDE">
+            <input aria-label="Код комнаты" id="room-input" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ABCDE">
             <button id="join-room" type="button" data-i18n="room.join">Join room</button>
         </div>
     </div>

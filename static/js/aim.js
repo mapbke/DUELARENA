@@ -68,10 +68,19 @@
         place();
     });
 
+    window.addEventListener("duo:round-cancelled", () => {
+        token = null;
+        active = false;
+        target.classList.add("hidden");
+        if (raf) cancelAnimationFrame(raf);
+    });
     window.addEventListener("duo:round-result", () => {
         token = null;
         active = false;
         target.classList.add("hidden");
         if (raf) cancelAnimationFrame(raf);
+    });
+    target.addEventListener("click", event => {
+        if (event.detail === 0) target.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true}));
     });
 })();

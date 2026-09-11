@@ -3,9 +3,10 @@
     const label = document.getElementById("connection-label");
 
     const socket = io({
-        transports:["websocket","polling"],
+        transports:["polling","websocket"],
+        upgrade:true,
         reconnection:true,
-        reconnectionAttempts:Infinity,
+        reconnectionAttempts:12,
         reconnectionDelay:700,
         reconnectionDelayMax:3500,
     });
@@ -34,8 +35,13 @@
     });
 
     socket.on("connect_error",error => {
-        console.error("[DuoArena socket]",error);
+        // Connection state is surfaced in the UI.
         status("offline","server.offline");
+    });
+
+    socket.io.on("reconnect_failed", () => {
+        status("offline","server.offline");
+        window.dispatchEvent(new CustomEvent("duo:reconnect-failed"));
     });
 
     socket.on("auth_user",user => {
