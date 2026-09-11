@@ -15,6 +15,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from database import (
     get_leaderboard,
     get_recent_matches,
+    get_stats_summary,
     get_user_by_github_id,
     init_database,
     record_match,
@@ -72,11 +73,26 @@ def current_user():
     raw = session.get("user")
     if not raw:
         return None
-    return {
+
+    user = {
         "github_id": int(raw["github_id"]),
         "login": str(raw["login"]),
         "avatar_url": str(raw.get("avatar_url") or ""),
     }
+
+    # Render Free can restart the process while the browser session cookie
+    # survives. Re-upserting here prevents valid logged-in users from becoming
+    # "Unknown" in match history after a restart/redeploy.
+    try:
+        upsert_github_user(
+            github_id=user["github_id"],
+            login=user["login"],
+            avatar_url=user["avatar_url"],
+        )
+    except Exception:
+        app.logger.exception("Failed to persist authenticated GitHub user")
+
+    return user
 
 
 def login_required(view):
@@ -336,6 +352,10 @@ def finish_round_if_ready(room_code):
                 "game": room["game"],
                 "winner_github_id": winner["github_id"],
                 "loser_github_id": loser["github_id"],
+                "winner_login": winner["login"],
+                "loser_login": loser["login"],
+                "winner_avatar_url": winner.get("avatar_url", ""),
+                "loser_avatar_url": loser.get("avatar_url", ""),
                 "winner_score": winner["score"],
                 "loser_score": loser["score"],
             }
@@ -361,7 +381,9 @@ def finish_round_if_ready(room_code):
 
 @app.get("/")
 def index():
-    return render_template("index.html", user=current_user())
+    user = current_user()
+    profile = get_user_by_github_id(user["github_id"]) if user else None
+    return render_template("index.html", user=user, profile=profile)
 
 
 def render_game(template_name):
@@ -531,11 +553,16 @@ def api_me():
 
 @app.get("/api/stats")
 def api_stats():
+    # current_user() also refreshes the logged-in user's DB row. This matters
+    # after a Render restart when the session cookie is still valid.
+    current_user()
+
     return jsonify(
         {
             "ok": True,
+            "summary": get_stats_summary(),
             "leaderboard": get_leaderboard(limit=20),
-            "recent_matches": get_recent_matches(limit=30),
+            "recent_matches": get_recent_matches(limit=40),
         }
     )
 

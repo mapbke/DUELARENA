@@ -1,19 +1,43 @@
 {% extends "base.html" %}
-{% block title %}DuoArena // Stats{% endblock %}
+{% block title %}DuoArena // Statistics{% endblock %}
 
 {% block content %}
 <main class="page stats-page">
     <a class="back-link" href="{{ url_for('index') }}">← На главную</a>
 
-    <section class="game-heading">
-        <div class="eyebrow">GLOBAL</div>
-        <h1>Статистика</h1>
+    <section class="stats-hero">
+        <div>
+            <div class="eyebrow"><span></span> GLOBAL DATA</div>
+            <h1>Статистика</h1>
+            <p>История дуэлей, рейтинг игроков и текущая активность арены.</p>
+        </div>
     </section>
 
-    <section class="stats-card">
-        <div class="section-title">
-            <h2>Лидерборд</h2>
-            <span>Победы / поражения / winrate</span>
+    <section class="summary-grid">
+        <article class="summary-card">
+            <small>PLAYERS</small>
+            <strong id="summary-players">—</strong>
+            <span>авторизовано игроков</span>
+        </article>
+        <article class="summary-card">
+            <small>MATCHES</small>
+            <strong id="summary-matches">—</strong>
+            <span>завершённых дуэлей</span>
+        </article>
+        <article class="summary-card featured">
+            <small>TOP PLAYER</small>
+            <strong id="summary-top">—</strong>
+            <span id="summary-top-sub">пока нет данных</span>
+        </article>
+    </section>
+
+    <section class="data-panel">
+        <div class="panel-head">
+            <div>
+                <div class="eyebrow"><span></span> RANKING</div>
+                <h2>Лидерборд</h2>
+            </div>
+            <span>Сортировка по победам и winrate</span>
         </div>
 
         <div class="table-wrap">
@@ -22,25 +46,30 @@
                     <tr>
                         <th>#</th>
                         <th>Игрок</th>
+                        <th>Матчи</th>
                         <th>W</th>
                         <th>L</th>
                         <th>WR</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboard-body">
-                    <tr><td colspan="5">Загрузка...</td></tr>
+                    <tr><td colspan="6">Загрузка...</td></tr>
                 </tbody>
             </table>
         </div>
     </section>
 
-    <section class="stats-card">
-        <div class="section-title">
-            <h2>Последние матчи</h2>
-            <span>История завершённых дуэлей</span>
+    <section class="data-panel">
+        <div class="panel-head">
+            <div>
+                <div class="eyebrow"><span></span> HISTORY</div>
+                <h2>Последние матчи</h2>
+            </div>
+            <span>Кто победил, кого и с каким результатом</span>
         </div>
+
         <div class="match-list" id="match-list">
-            <div class="match-row">Загрузка...</div>
+            <div class="empty-state">Загрузка истории...</div>
         </div>
     </section>
 </main>

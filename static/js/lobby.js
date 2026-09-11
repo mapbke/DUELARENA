@@ -26,6 +26,16 @@
     const gameStage = document.getElementById("game-stage");
     const stageLock = document.getElementById("stage-lock");
 
+    const resultModal = document.getElementById("result-modal");
+    const resultCard = document.getElementById("result-card");
+    const resultKicker = document.getElementById("result-kicker");
+    const resultOutcome = document.getElementById("result-outcome");
+    const resultAvatar = document.getElementById("result-avatar");
+    const resultWinner = document.getElementById("result-winner");
+    const resultScore = document.getElementById("result-score");
+    const resultRematch = document.getElementById("result-rematch");
+    const resultClose = document.getElementById("result-close");
+
     const state = {
         room: null,
         roomState: null,
@@ -187,6 +197,80 @@
         }
     }
 
+    function formatScore(gameName, score) {
+        const value = Number(score);
+        if (!Number.isFinite(value)) return "—";
+
+        if (gameName === "reaction") {
+            return value >= 999999 ? "FALSE START" : `${value.toFixed(0)} ms`;
+        }
+        if (gameName === "typing") return `${value.toFixed(1)} WPM`;
+        if (gameName === "cps") return `${value.toFixed(0)} clicks`;
+        if (gameName === "aim") return `${value.toFixed(3)} targets/s`;
+        if (gameName === "blind") return `${(value / 1000).toFixed(3)}s error`;
+        return String(value);
+    }
+
+    function showRoundResult(data) {
+        if (!resultModal) return;
+
+        const me = window.DuoArena?.user;
+        const winner = data.winner;
+        const isDraw = Boolean(data.draw);
+        const iWon = !isDraw && me && winner &&
+            String(me.github_id) === String(winner.github_id);
+
+        resultCard.classList.remove("victory", "defeat", "draw");
+
+        if (isDraw) {
+            resultCard.classList.add("draw");
+            resultKicker.textContent = `ROUND ${data.round} COMPLETE`;
+            resultOutcome.textContent = "НИЧЬЯ";
+            resultWinner.textContent = "Равный результат";
+            resultAvatar.hidden = true;
+            resultScore.textContent = "Оба игрока показали одинаковый результат";
+        } else {
+            resultCard.classList.add(iWon ? "victory" : "defeat");
+            resultKicker.textContent = `ROUND ${data.round} COMPLETE`;
+            resultOutcome.textContent = iWon ? "ПОБЕДА" : "ПОРАЖЕНИЕ";
+            resultWinner.textContent = `${winner.login} победил`;
+
+            if (winner.avatar_url) {
+                resultAvatar.src = winner.avatar_url;
+                resultAvatar.hidden = false;
+            } else {
+                resultAvatar.hidden = true;
+            }
+
+            const winnerValue = data.scores[String(winner.github_id)];
+            resultScore.textContent = `Лучший результат: ${formatScore(data.game, winnerValue)}`;
+        }
+
+        resultModal.classList.remove("hidden");
+        requestAnimationFrame(() => resultModal.classList.add("show"));
+    }
+
+    function hideRoundResult() {
+        if (!resultModal) return;
+        resultModal.classList.remove("show");
+        setTimeout(() => resultModal.classList.add("hidden"), 180);
+    }
+
+    resultClose?.addEventListener("click", hideRoundResult);
+
+    resultModal?.addEventListener("pointerdown", (event) => {
+        if (event.target === resultModal) hideRoundResult();
+    });
+
+    resultRematch?.addEventListener("click", () => {
+        hideRoundResult();
+        resultRematch.disabled = true;
+        resultRematch.textContent = "Готов ✓";
+        readyButton.disabled = true;
+        readyButton.textContent = "Готов ✓";
+        socket.emit("player_ready");
+    });
+
     createButton.addEventListener("click", () => {
         createButton.disabled = true;
         socket.emit("create_room", { game });
@@ -295,11 +379,17 @@
         readyButton.textContent = "Ещё раунд";
         readyButton.classList.remove("hidden");
 
+        if (resultRematch) {
+            resultRematch.disabled = false;
+            resultRematch.textContent = "Готов к реваншу";
+        }
+
         const text = data.draw
             ? "Ничья."
             : `${data.winner.login} побеждает.`;
 
-        setStatus(`${text} Нажмите «Ещё раунд», когда будете готовы.`, "success");
+        setStatus(`${text} Раунд завершён.`, "success");
+        showRoundResult(data);
         window.dispatchEvent(new CustomEvent("duo:round-result", { detail: data }));
     });
 

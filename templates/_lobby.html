@@ -1,25 +1,31 @@
 <section class="lobby" data-game="{{ game }}">
-    <div class="lobby-head">
+    <div class="lobby-topline">
         <div>
-            <div class="eyebrow">КОМНАТА</div>
-            <h2 id="lobby-title">Подключитесь к сопернику</h2>
+            <div class="eyebrow"><span></span> PRIVATE LOBBY</div>
+            <h2 id="lobby-title">Создайте или найдите комнату</h2>
         </div>
+
         <div class="room-badge hidden" id="room-badge">
-            ROOM <strong id="room-code-display">-----</strong>
+            <small>ROOM</small>
+            <strong id="room-code-display">-----</strong>
         </div>
     </div>
 
     <div id="lobby-setup" class="lobby-setup">
-        <button class="primary room-create" id="create-room-button" type="button">
-            Создать комнату
-            <small>Вы получите код для второго игрока</small>
+        <button class="primary create-room-card" id="create-room-button" type="button">
+            <span class="create-icon">＋</span>
+            <span>
+                <strong>Создать комнату</strong>
+                <small>Получить новый код и ждать соперника</small>
+            </span>
+            <b>→</b>
         </button>
 
-        <div class="or"><span>или</span></div>
+        <div class="lobby-divider"><span>или войдите по коду</span></div>
 
-        <div class="join-box">
-            <label for="room-code-input">Уже есть код?</label>
-            <div class="join-row">
+        <div class="join-panel">
+            <div>
+                <label for="room-code-input">КОД КОМНАТЫ</label>
                 <input
                     id="room-code-input"
                     class="room-code-input"
@@ -28,36 +34,66 @@
                     autocomplete="off"
                     spellcheck="false"
                 >
-                <button class="secondary" id="join-room-button" type="button">
-                    Войти
-                </button>
             </div>
+            <button class="secondary join-button" id="join-room-button" type="button">
+                Войти →
+            </button>
         </div>
-
-        <p class="hint">Первый игрок нажимает «Создать комнату». Второй вводит полученный 5-значный код.</p>
     </div>
 
     <div id="lobby-active" class="lobby-active hidden">
-        <div class="room-tools">
-            <div>
-                <small>Код комнаты</small>
+        <div class="room-commandbar">
+            <div class="room-code-block">
+                <small>КОД КОМНАТЫ</small>
                 <strong id="big-room-code">-----</strong>
             </div>
-            <button class="secondary" id="copy-room-button" type="button">Копировать</button>
-            <button class="ghost danger" id="leave-room-button" type="button">Выйти</button>
+
+            <div class="room-command-actions">
+                <button class="secondary" id="copy-room-button" type="button">Копировать код</button>
+                <button class="ghost danger" id="leave-room-button" type="button">Выйти</button>
+            </div>
         </div>
 
         <div class="players">
             <div class="player-slot" id="player-one"></div>
-            <div class="versus">VS</div>
+            <div class="versus">
+                <span>VS</span>
+            </div>
             <div class="player-slot right" id="player-two"></div>
         </div>
 
         <div class="ready-area">
-            <div class="lobby-status" id="lobby-status">Ждём второго игрока...</div>
+            <div>
+                <small>STATUS</small>
+                <div class="lobby-status" id="lobby-status">Ждём второго игрока...</div>
+            </div>
             <button class="primary ready-button hidden" id="ready-button" type="button">
                 Я готов
             </button>
         </div>
     </div>
 </section>
+
+<div class="result-modal hidden" id="result-modal">
+    <div class="result-card" id="result-card">
+        <button class="result-close" id="result-close" type="button">×</button>
+
+        <div class="result-kicker" id="result-kicker">ROUND COMPLETE</div>
+        <div class="result-outcome" id="result-outcome">ПОБЕДА</div>
+
+        <img class="result-avatar" id="result-avatar" alt="">
+        <h2 id="result-winner">Player</h2>
+        <div class="result-score" id="result-score">—</div>
+
+        <div class="result-actions">
+            <button class="primary" id="result-rematch" type="button">
+                Готов к реваншу
+            </button>
+            <a class="secondary result-home" href="{{ url_for('index') }}">
+                На главную
+            </a>
+        </div>
+
+        <small class="result-note">Для нового раунда оба игрока должны подтвердить готовность.</small>
+    </div>
+</div>

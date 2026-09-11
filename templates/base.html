@@ -8,10 +8,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="grid-noise"></div>
+
     <header class="topbar">
         <a class="brand" href="{{ url_for('index') }}">
-            <span class="brand-mark">D</span>
-            <span>DUOARENA</span>
+            <span class="brand-mark">DA</span>
+            <span class="brand-copy">
+                <strong>DUOARENA</strong>
+                <small>PRIVATE DUELS</small>
+            </span>
         </a>
 
         <div class="topbar-right">
@@ -23,7 +30,10 @@
             {% if user %}
             <div class="profile">
                 <img src="{{ user.avatar_url }}" alt="">
-                <span>{{ user.login }}</span>
+                <div>
+                    <strong>{{ user.login }}</strong>
+                    <small>GITHUB</small>
+                </div>
                 <a href="{{ url_for('logout') }}">Выйти</a>
             </div>
             {% endif %}

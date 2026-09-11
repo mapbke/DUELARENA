@@ -10,7 +10,29 @@ def get_connection():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH, timeout=10)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
     return connection
+
+
+def _column_names(connection, table):
+    rows = connection.execute(f"PRAGMA table_info({table})").fetchall()
+    return {row["name"] for row in rows}
+
+
+def _ensure_match_snapshot_columns(connection):
+    columns = _column_names(connection, "game_matches")
+    additions = {
+        "winner_login": "TEXT",
+        "loser_login": "TEXT",
+        "winner_avatar_url": "TEXT",
+        "loser_avatar_url": "TEXT",
+    }
+
+    for name, sql_type in additions.items():
+        if name not in columns:
+            connection.execute(
+                f"ALTER TABLE game_matches ADD COLUMN {name} {sql_type}"
+            )
 
 
 def init_database():
@@ -33,15 +55,32 @@ def init_database():
                 game TEXT NOT NULL,
                 winner_github_id INTEGER NOT NULL,
                 loser_github_id INTEGER NOT NULL,
+                winner_login TEXT,
+                loser_login TEXT,
+                winner_avatar_url TEXT,
+                loser_avatar_url TEXT,
                 winner_score REAL,
                 loser_score REAL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
+        # Migrates databases created by the previous DuoArena build.
+        _ensure_match_snapshot_columns(connection)
+
         connection.execute("""
             CREATE INDEX IF NOT EXISTS idx_matches_created
             ON game_matches(created_at DESC)
+        """)
+
+        connection.execute("""
+            CREATE INDEX IF NOT EXISTS idx_matches_winner
+            ON game_matches(winner_github_id)
+        """)
+
+        connection.execute("""
+            CREATE INDEX IF NOT EXISTS idx_matches_loser
+            ON game_matches(loser_github_id)
         """)
 
 
@@ -81,6 +120,10 @@ def record_match(
     loser_github_id,
     winner_score=None,
     loser_score=None,
+    winner_login=None,
+    loser_login=None,
+    winner_avatar_url=None,
+    loser_avatar_url=None,
 ):
     with get_connection() as connection:
         connection.execute("""
@@ -88,14 +131,22 @@ def record_match(
                 game,
                 winner_github_id,
                 loser_github_id,
+                winner_login,
+                loser_login,
+                winner_avatar_url,
+                loser_avatar_url,
                 winner_score,
                 loser_score
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             game,
             int(winner_github_id),
             int(loser_github_id),
+            winner_login,
+            loser_login,
+            winner_avatar_url,
+            loser_avatar_url,
             winner_score,
             loser_score,
         ))
@@ -124,6 +175,7 @@ def get_leaderboard(limit=20):
                 avatar_url,
                 wins,
                 losses,
+                wins + losses AS matches,
                 CASE
                     WHEN wins + losses = 0 THEN 0
                     ELSE ROUND((wins * 100.0) / (wins + losses), 1)
@@ -136,7 +188,7 @@ def get_leaderboard(limit=20):
     return [dict(row) for row in rows]
 
 
-def get_recent_matches(limit=30):
+def get_recent_matches(limit=40):
     with get_connection() as connection:
         rows = connection.execute("""
             SELECT
@@ -145,12 +197,33 @@ def get_recent_matches(limit=30):
                 m.winner_score,
                 m.loser_score,
                 m.created_at,
-                winner.github_id AS winner_github_id,
-                winner.login AS winner_login,
-                winner.avatar_url AS winner_avatar_url,
-                loser.github_id AS loser_github_id,
-                loser.login AS loser_login,
-                loser.avatar_url AS loser_avatar_url
+                m.winner_github_id,
+                m.loser_github_id,
+
+                COALESCE(
+                    winner.login,
+                    NULLIF(m.winner_login, ''),
+                    'Unknown'
+                ) AS winner_login,
+
+                COALESCE(
+                    loser.login,
+                    NULLIF(m.loser_login, ''),
+                    'Unknown'
+                ) AS loser_login,
+
+                COALESCE(
+                    winner.avatar_url,
+                    NULLIF(m.winner_avatar_url, ''),
+                    ''
+                ) AS winner_avatar_url,
+
+                COALESCE(
+                    loser.avatar_url,
+                    NULLIF(m.loser_avatar_url, ''),
+                    ''
+                ) AS loser_avatar_url
+
             FROM game_matches AS m
             LEFT JOIN github_users AS winner
                 ON winner.github_id = m.winner_github_id
@@ -161,6 +234,38 @@ def get_recent_matches(limit=30):
         """, (int(limit),)).fetchall()
 
     return [dict(row) for row in rows]
+
+
+def get_stats_summary():
+    with get_connection() as connection:
+        players = connection.execute(
+            "SELECT COUNT(*) AS count FROM github_users"
+        ).fetchone()["count"]
+
+        matches = connection.execute(
+            "SELECT COUNT(*) AS count FROM game_matches"
+        ).fetchone()["count"]
+
+        top = connection.execute("""
+            SELECT login, avatar_url, wins, losses
+            FROM github_users
+            ORDER BY wins DESC, login COLLATE NOCASE ASC
+            LIMIT 1
+        """).fetchone()
+
+        mode_rows = connection.execute("""
+            SELECT game, COUNT(*) AS count
+            FROM game_matches
+            GROUP BY game
+            ORDER BY count DESC
+        """).fetchall()
+
+    return {
+        "players": players,
+        "matches": matches,
+        "top_player": dict(top) if top else None,
+        "modes": {row["game"]: row["count"] for row in mode_rows},
+    }
 
 
 if __name__ == "__main__":

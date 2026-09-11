@@ -3,55 +3,112 @@
 
 {% block content %}
 <main class="page hub-page">
-    <section class="hero">
-        <div class="eyebrow">PRIVATE 1V1 BATTLEGROUND</div>
-        <h1>Два игрока.<br><span>Одна комната.</span></h1>
-        <p>Выберите режим, создайте комнату и отправьте другу короткий код. Никаких сложных лобби.</p>
+    <section class="hero hero-shell">
+        <div class="hero-copy">
+            <div class="eyebrow"><span></span> PRIVATE REALTIME ARENA</div>
+            <h1>Дуэли без<br><em>лишнего шума.</em></h1>
+            <p>
+                Выберите режим, создайте комнату и отправьте другу короткий код.
+                Два игрока, один раунд, понятный результат.
+            </p>
 
-        {% if not user %}
-        <a class="primary big" href="{{ url_for('login_github') }}">
-            Войти через GitHub
-        </a>
-        {% else %}
-        <div class="how-it-works">
-            <div><b>1</b><span>Выберите режим</span></div>
-            <div><b>2</b><span>Создайте комнату</span></div>
-            <div><b>3</b><span>Отправьте код другу</span></div>
+            {% if not user %}
+            <a class="primary hero-cta" href="{{ url_for('login_github') }}">
+                <span>Войти через GitHub</span>
+                <b>→</b>
+            </a>
+            {% else %}
+            <div class="steps">
+                <div><b>01</b><span>Выберите режим</span></div>
+                <div><b>02</b><span>Создайте комнату</span></div>
+                <div><b>03</b><span>Скиньте код сопернику</span></div>
+            </div>
+            {% endif %}
         </div>
+
+        {% if user %}
+        <aside class="profile-card">
+            <div class="profile-card-head">
+                <img src="{{ user.avatar_url }}" alt="">
+                <div>
+                    <small>YOUR PROFILE</small>
+                    <strong>{{ user.login }}</strong>
+                </div>
+            </div>
+
+            <div class="profile-record">
+                <div>
+                    <small>WINS</small>
+                    <strong>{{ profile.wins if profile else 0 }}</strong>
+                </div>
+                <div>
+                    <small>LOSSES</small>
+                    <strong>{{ profile.losses if profile else 0 }}</strong>
+                </div>
+                <div>
+                    <small>WINRATE</small>
+                    {% set total = (profile.wins + profile.losses) if profile else 0 %}
+                    {% set wr = ((profile.wins * 100 / total)|round(0)|int) if total else 0 %}
+                    <strong>{{ wr }}%</strong>
+                </div>
+            </div>
+
+            <a href="{{ url_for('stats') }}" class="profile-stats-link">
+                Открыть статистику <span>↗</span>
+            </a>
+        </aside>
         {% endif %}
     </section>
 
-    <section class="game-grid">
+    <section class="section-heading">
+        <div>
+            <div class="eyebrow"><span></span> MODES</div>
+            <h2>Выберите арену</h2>
+        </div>
+        <p>Все режимы работают через одно приватное лобби на двух игроков.</p>
+    </section>
+
+    <section class="mode-grid">
         {% set games = [
-            ('reaction', '01', 'REACTION', 'Reaction Duel', 'Ждите зелёного сигнала и кликайте быстрее соперника.'),
-            ('typing', '02', 'TYPING', 'Typing Duel', 'Одинаковый текст для обоих. Побеждает больший WPM.'),
-            ('cps', '03', 'CLICKS', 'CPS Battle', '10 секунд кликов. Побеждает большее количество.'),
-            ('aim', '04', 'AIM', 'Aim Duel', '15 целей. Побеждает лучший темп попаданий.'),
-            ('blind', '05', 'TIMING', 'Blind Timing', 'Остановите таймер как можно ближе к 5.000 секундам.')
+            ('reaction', '01', 'REACTION', 'Reaction Duel', 'Реакция на серверный сигнал. Ранний клик — фальстарт.', 'LOWEST MS'),
+            ('typing', '02', 'TYPING', 'Typing Duel', 'Одинаковый текст для обоих игроков. Скорость и точность.', 'HIGHEST WPM'),
+            ('cps', '03', 'CLICKS', 'CPS Battle', 'Десять секунд чистого клика. Без лишних правил.', 'MOST CLICKS'),
+            ('aim', '04', 'AIM', 'Aim Duel', 'Пятнадцать целей в случайных точках арены.', 'FASTEST PACE'),
+            ('blind', '05', 'TIMING', 'Blind Timing', 'Попадите максимально близко к отметке 5.000 секунд.', 'LOWEST ERROR')
         ] %}
 
-        {% for endpoint, number, tag, name, description in games %}
-        <article class="game-card">
-            <div class="card-number">{{ number }}</div>
-            <div class="card-tag">{{ tag }}</div>
-            <h2>{{ name }}</h2>
+        {% for endpoint, number, tag, name, description, rule in games %}
+        <article class="mode-card">
+            <div class="mode-top">
+                <span class="mode-number">{{ number }}</span>
+                <span class="mode-rule">{{ rule }}</span>
+            </div>
+            <div class="mode-tag">{{ tag }}</div>
+            <h3>{{ name }}</h3>
             <p>{{ description }}</p>
 
             {% if user %}
-            <a class="card-action" href="{{ url_for(endpoint) }}">Играть →</a>
+            <a href="{{ url_for(endpoint) }}" class="mode-action">
+                <span>Открыть режим</span>
+                <b>→</b>
+            </a>
             {% else %}
-            <a class="card-action" href="{{ url_for('login_github', next=url_for(endpoint)) }}">Войти и играть →</a>
+            <a href="{{ url_for('login_github', next=url_for(endpoint)) }}" class="mode-action">
+                <span>Войти и играть</span>
+                <b>→</b>
+            </a>
             {% endif %}
         </article>
         {% endfor %}
-
-        <a class="stats-link" href="{{ url_for('stats') }}">
-            <div>
-                <small>GLOBAL</small>
-                <strong>Статистика и история матчей</strong>
-            </div>
-            <span>→</span>
-        </a>
     </section>
+
+    <a class="stats-banner" href="{{ url_for('stats') }}">
+        <div>
+            <div class="eyebrow"><span></span> GLOBAL</div>
+            <strong>Лидерборд и история матчей</strong>
+            <p>Победы, поражения, winrate и результаты последних дуэлей.</p>
+        </div>
+        <span class="stats-banner-arrow">↗</span>
+    </a>
 </main>
 {% endblock %}
