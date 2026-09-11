@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DuoArena</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <main class="container">
+
+        <div class="logo">
+            DUO<span>ARENA</span>
+        </div>
+
+        <p class="subtitle">
+            private 1v1 arena
+        </p>
+
+        <div class="games">
+
+            <a href="/reaction" class="game-card">
+                <h2>Reaction Duel</h2>
+                <p>Кто быстрее нажмёт после сигнала.</p>
+            </a>
+
+            <a href="/typing" class="game-card">
+                <h2>Typing Duel</h2>
+                <p>Кто быстрее напечатает текст.</p>
+            </a>
+
+            <a href="/stats" class="game-card">
+                <h2>Statistics</h2>
+                <p>Победы, поражения и рекорды.</p>
+            </a>
+
+        </div>
+
+    </main>
+
+</body>
+</html>

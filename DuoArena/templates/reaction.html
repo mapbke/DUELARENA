@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reaction Duel</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+</head>
+
+<body>
+
+    <main class="container">
+
+        <a href="/" class="back">← DuoArena</a>
+
+        <h1>Reaction Duel</h1>
+
+        <div class="score">
+            <div>
+                <span>NIKITA</span>
+                <strong id="score-nikita">0</strong>
+            </div>
+
+            <span class="score-divider">:</span>
+
+            <div>
+                <span>GLEB</span>
+                <strong id="score-gleb">0</strong>
+            </div>
+        </div>
+
+        <div id="reaction-area" class="reaction-area">
+            WAITING
+        </div>
+
+        <button id="ready-button" class="button">
+            READY
+        </button>
+
+        <p id="status">
+            Waiting for players...
+        </p>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/reaction.js') }}"></script>
+
+</body>
+</html>
