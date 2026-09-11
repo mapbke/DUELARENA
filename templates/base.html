@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>{% block title %}DuoArena{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="{{ url_for('index') }}">
+            <span class="brand-mark">D</span>
+            <span>DUOARENA</span>
+        </a>
+
+        <div class="topbar-right">
+            <span class="server-pill" id="server-pill">
+                <span class="dot"></span>
+                <span id="server-label">подключение...</span>
+            </span>
+
+            {% if user %}
+            <div class="profile">
+                <img src="{{ user.avatar_url }}" alt="">
+                <span>{{ user.login }}</span>
+                <a href="{{ url_for('logout') }}">Выйти</a>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+
+    {% block content %}{% endblock %}
+
+    {% if user %}
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+    {% endif %}
+    {% block scripts %}{% endblock %}
+</body>
+</html>

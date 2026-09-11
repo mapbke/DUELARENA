@@ -2,7 +2,6 @@ import os
 import sqlite3
 from pathlib import Path
 
-
 DEFAULT_DB_PATH = Path(__file__).parent / "data" / "duoarena.db"
 DB_PATH = Path(os.getenv("DATABASE_PATH", str(DEFAULT_DB_PATH)))
 
@@ -32,18 +31,16 @@ def init_database():
             CREATE TABLE IF NOT EXISTS game_matches (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 game TEXT NOT NULL,
-                winner_github_id INTEGER,
-                loser_github_id INTEGER,
+                winner_github_id INTEGER NOT NULL,
+                loser_github_id INTEGER NOT NULL,
                 winner_score REAL,
                 loser_score REAL,
-                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (winner_github_id) REFERENCES github_users(github_id),
-                FOREIGN KEY (loser_github_id) REFERENCES github_users(github_id)
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
         connection.execute("""
-            CREATE INDEX IF NOT EXISTS idx_game_matches_created
+            CREATE INDEX IF NOT EXISTS idx_matches_created
             ON game_matches(created_at DESC)
         """)
 
@@ -168,4 +165,4 @@ def get_recent_matches(limit=30):
 
 if __name__ == "__main__":
     init_database()
-    print(f"Database initialized: {DB_PATH}")
+    print(f"Database initialized at: {DB_PATH}")

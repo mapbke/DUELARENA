@@ -1,11 +1,21 @@
 (async () => {
     const body = document.getElementById("leaderboard-body");
-    const matches = document.getElementById("match-list");
+    const list = document.getElementById("match-list");
 
-    function esc(value) {
+    function escapeHtml(value) {
         const div = document.createElement("div");
         div.textContent = String(value ?? "");
         return div.innerHTML;
+    }
+
+    function gameName(value) {
+        return {
+            reaction: "Reaction",
+            typing: "Typing",
+            cps: "CPS",
+            aim: "Aim",
+            blind: "Blind",
+        }[value] || value;
     }
 
     try {
@@ -14,41 +24,38 @@
 
         const leaderboard = data.leaderboard || [];
         body.innerHTML = leaderboard.length
-            ? leaderboard.map((p, index) => `
+            ? leaderboard.map((player, index) => `
                 <tr>
                     <td>${index + 1}</td>
                     <td>
                         <div class="stats-user">
-                            <img src="${esc(p.avatar_url)}" alt="">
-                            <strong>${esc(p.login)}</strong>
+                            <img src="${escapeHtml(player.avatar_url)}" alt="">
+                            <strong>${escapeHtml(player.login)}</strong>
                         </div>
                     </td>
-                    <td>${p.wins}</td>
-                    <td>${p.losses}</td>
-                    <td>${p.winrate}%</td>
+                    <td>${player.wins}</td>
+                    <td>${player.losses}</td>
+                    <td>${player.winrate}%</td>
                 </tr>
             `).join("")
-            : `<tr><td colspan="5">No matches yet.</td></tr>`;
+            : `<tr><td colspan="5">Матчей пока нет.</td></tr>`;
 
-        const recent = data.recent_matches || [];
-        matches.innerHTML = recent.length
-            ? recent.map(m => `
+        const matches = data.recent_matches || [];
+        list.innerHTML = matches.length
+            ? matches.map(match => `
                 <div class="match-row">
                     <div>
-                        <strong>${esc(m.winner_login || "Unknown")}</strong>
-                        <span style="color:var(--success);"> defeated </span>
-                        <strong>${esc(m.loser_login || "Unknown")}</strong>
+                        <strong>${escapeHtml(match.winner_login || "Unknown")}</strong>
+                        <span style="color:var(--success)"> победил </span>
+                        <strong>${escapeHtml(match.loser_login || "Unknown")}</strong>
                     </div>
-                    <div class="match-meta">
-                        ${esc(String(m.game).toUpperCase())} · ${esc(m.created_at)}
-                    </div>
+                    <small>${escapeHtml(gameName(match.game))} · ${escapeHtml(match.created_at)}</small>
                 </div>
             `).join("")
-            : `<div class="match-row">No matches yet.</div>`;
-
+            : `<div class="match-row">Завершённых матчей пока нет.</div>`;
     } catch (error) {
-        body.innerHTML = `<tr><td colspan="5">Failed to load stats.</td></tr>`;
-        matches.innerHTML = `<div class="match-row">Failed to load match history.</div>`;
         console.error(error);
+        body.innerHTML = `<tr><td colspan="5">Не удалось загрузить статистику.</td></tr>`;
+        list.innerHTML = `<div class="match-row">Не удалось загрузить историю.</div>`;
     }
 })();

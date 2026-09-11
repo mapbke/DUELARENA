@@ -1,7 +1,7 @@
+import math
 import os
 import random
 import secrets
-import string
 import threading
 import time
 from functools import wraps
@@ -9,31 +9,19 @@ from urllib.parse import urlencode
 
 import requests
 from dotenv import load_dotenv
-from flask import (
-    Flask,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for,
-)
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
 from database import (
+    get_leaderboard,
     get_recent_matches,
     get_user_by_github_id,
     init_database,
     record_match,
     upsert_github_user,
-    get_leaderboard,
 )
 
 load_dotenv()
-
-# -----------------------------------------------------------------------------
-# CONFIG
-# -----------------------------------------------------------------------------
 
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:5000").rstrip("/")
 SECRET_KEY = os.getenv("SECRET_KEY", "duoarena-dev-secret-change-me")
@@ -48,51 +36,20 @@ app.config.update(
     SESSION_COOKIE_SECURE=BASE_URL.startswith("https://"),
 )
 
-allowed_origins = [
-    BASE_URL,
-    "http://127.0.0.1:5000",
-    "http://localhost:5000",
-]
-
 socketio = SocketIO(
     app,
-    cors_allowed_origins=allowed_origins,
+    cors_allowed_origins=[
+        BASE_URL,
+        "http://127.0.0.1:5000",
+        "http://localhost:5000",
+    ],
     async_mode="threading",
 )
 
 init_database()
 
-# -----------------------------------------------------------------------------
-# IN-MEMORY REALTIME STATE
-# -----------------------------------------------------------------------------
-# Render free instances can restart at any time, so rooms are intentionally
-# ephemeral. Persistent stats live in SQLite for now (also ephemeral on Render
-# free unless moved to a persistent DB later).
-
 state_lock = threading.RLock()
-
 rooms = {}
-# room_code -> {
-#   "host_github_id": int,
-#   "game": "reaction",
-#   "players": {
-#       github_id: {
-#           "github_id": int,
-#           "login": str,
-#           "avatar_url": str,
-#           "sid": str,
-#           "ready": bool,
-#           "score": float|None,
-#       }
-#   },
-#   "round_token": str|None,
-#   "reaction_go_at": float|None,
-#   "winner_github_id": int|None,
-# }
-
-online_users = {}
-# lower(login) -> set(socket sid)
-
 
 GAME_RULES = {
     "reaction": "min",
@@ -102,19 +59,23 @@ GAME_RULES = {
     "blind": "min",
 }
 
+GAME_NAMES = {
+    "reaction": "Reaction Duel",
+    "typing": "Typing Duel",
+    "cps": "CPS Battle",
+    "aim": "Aim Duel",
+    "blind": "Blind Timing",
+}
 
-# -----------------------------------------------------------------------------
-# HELPERS
-# -----------------------------------------------------------------------------
 
 def current_user():
-    user = session.get("user")
-    if not user:
+    raw = session.get("user")
+    if not raw:
         return None
     return {
-        "github_id": int(user["github_id"]),
-        "login": str(user["login"]),
-        "avatar_url": str(user.get("avatar_url") or ""),
+        "github_id": int(raw["github_id"]),
+        "login": str(raw["login"]),
+        "avatar_url": str(raw.get("avatar_url") or ""),
     }
 
 
@@ -136,8 +97,15 @@ def api_login_required(view):
     return wrapped
 
 
-def socket_user():
-    return current_user()
+def safe_next_path(value):
+    if not value or not value.startswith("/") or value.startswith("//"):
+        return "/"
+    return value
+
+
+def ensure_game(value):
+    game = str(value or "reaction").lower().strip()
+    return game if game in GAME_RULES else "reaction"
 
 
 def generate_room_code(length=5):
@@ -154,6 +122,7 @@ def public_player(player):
         "github_id": player["github_id"],
         "login": player["login"],
         "avatar_url": player.get("avatar_url", ""),
+        "connected": bool(player.get("connected", False)),
         "ready": bool(player.get("ready", False)),
         "score": player.get("score"),
     }
@@ -167,36 +136,20 @@ def room_payload(room_code):
         return {
             "room": room_code,
             "game": room["game"],
+            "game_name": GAME_NAMES[room["game"]],
+            "round": room["round"],
             "host_github_id": room["host_github_id"],
             "players": [public_player(p) for p in room["players"].values()],
             "player_count": len(room["players"]),
-            "winner_github_id": room.get("winner_github_id"),
         }
 
 
 def find_user_room(github_id):
     with state_lock:
-        for code, room in rooms.items():
+        for room_code, room in rooms.items():
             if github_id in room["players"]:
-                return code
+                return room_code
     return None
-
-
-def add_online_user(login, sid):
-    key = login.lower()
-    with state_lock:
-        online_users.setdefault(key, set()).add(sid)
-
-
-def remove_online_sid(login, sid):
-    key = login.lower()
-    with state_lock:
-        sids = online_users.get(key)
-        if not sids:
-            return
-        sids.discard(sid)
-        if not sids:
-            online_users.pop(key, None)
 
 
 def emit_room_state(room_code):
@@ -205,156 +158,173 @@ def emit_room_state(room_code):
         socketio.emit("room_state", payload, to=room_code)
 
 
-def emit_to_login(login, event, payload):
+def remove_player_state(github_id, room_code=None):
     with state_lock:
-        sids = list(online_users.get(login.lower(), set()))
-    for sid in sids:
-        socketio.emit(event, payload, to=sid)
-    return len(sids)
+        code = room_code or find_user_room(github_id)
+        if not code:
+            return None
 
-
-def remove_player_from_room(github_id, sid=None):
-    room_code = find_user_room(github_id)
-    if not room_code:
-        return
-
-    with state_lock:
-        room = rooms.get(room_code)
+        room = rooms.get(code)
         if not room or github_id not in room["players"]:
-            return
+            return None
 
         player = room["players"].pop(github_id)
 
-        if sid:
-            try:
-                leave_room(room_code, sid=sid)
-            except Exception:
-                pass
-
         if not room["players"]:
-            rooms.pop(room_code, None)
-            return
+            rooms.pop(code, None)
+            return {"room": code, "player": player, "room_deleted": True}
 
         if room["host_github_id"] == github_id:
             room["host_github_id"] = next(iter(room["players"]))
 
-        # Reset the round if somebody leaves.
         room["round_token"] = None
         room["reaction_go_at"] = None
-        room["winner_github_id"] = None
         for p in room["players"].values():
             p["ready"] = False
             p["score"] = None
 
+        return {"room": code, "player": player, "room_deleted": False}
+
+
+def notify_player_removed(result):
+    if not result or result["room_deleted"]:
+        return
+    room_code = result["room"]
     socketio.emit(
         "player_left",
-        {"github_id": github_id, "login": player["login"]},
+        {
+            "github_id": result["player"]["github_id"],
+            "login": result["player"]["login"],
+        },
         to=room_code,
     )
     emit_room_state(room_code)
 
 
-def ensure_game(game):
-    game = str(game or "reaction").lower().strip()
-    return game if game in GAME_RULES else "reaction"
+def disconnect_cleanup(github_id, room_code, sid):
+    socketio.sleep(10)
 
-
-def create_room_for_user(user, game):
-    old_room = find_user_room(user["github_id"])
-    if old_room:
-        remove_player_from_room(user["github_id"])
-
-    room_code = generate_room_code()
+    should_remove = False
     with state_lock:
-        rooms[room_code] = {
-            "host_github_id": user["github_id"],
-            "game": ensure_game(game),
-            "players": {
-                user["github_id"]: {
-                    **user,
-                    "sid": request.sid,
-                    "ready": False,
-                    "score": None,
-                }
-            },
-            "round_token": None,
-            "reaction_go_at": None,
-            "winner_github_id": None,
-        }
+        room = rooms.get(room_code)
+        player = room["players"].get(github_id) if room else None
+        if (
+            player
+            and player.get("sid") == sid
+            and not player.get("connected", False)
+        ):
+            should_remove = True
 
-    join_room(room_code)
-    return room_code
+    if should_remove:
+        result = remove_player_state(github_id, room_code)
+        notify_player_removed(result)
 
 
 def both_ready(room):
     players = list(room["players"].values())
-    return len(players) == 2 and all(p["ready"] for p in players)
+    return (
+        len(players) == 2
+        and all(p.get("connected") for p in players)
+        and all(p.get("ready") for p in players)
+    )
 
 
-def reset_room_round(room):
-    room["round_token"] = None
-    room["reaction_go_at"] = None
-    room["winner_github_id"] = None
-    for player in room["players"].values():
-        player["ready"] = False
-        player["score"] = None
+def start_round_if_possible(room_code):
+    with state_lock:
+        room = rooms.get(room_code)
+        if not room or not both_ready(room) or room.get("round_token"):
+            return
+
+        room["round_token"] = secrets.token_urlsafe(16)
+        room["reaction_go_at"] = None
+
+        for player in room["players"].values():
+            player["score"] = None
+
+        token = room["round_token"]
+        game = room["game"]
+        round_number = room["round"]
+
+    socketio.emit(
+        "round_prepare",
+        {
+            "room": room_code,
+            "game": game,
+            "round": round_number,
+            "round_token": token,
+        },
+        to=room_code,
+    )
+
+    if game == "reaction":
+        socketio.start_background_task(start_reaction_round, room_code, token)
+    else:
+        socketio.emit(
+            "round_start",
+            {
+                "room": room_code,
+                "game": game,
+                "round": round_number,
+                "round_token": token,
+            },
+            to=room_code,
+        )
 
 
-def start_reaction_round(room_code, round_token):
-    # Random wait is generated on the server.
-    socketio.sleep(random.uniform(1.5, 4.5))
+def start_reaction_round(room_code, token):
+    socketio.sleep(random.uniform(1.6, 4.2))
 
     with state_lock:
         room = rooms.get(room_code)
-        if not room or room.get("round_token") != round_token:
+        if not room or room.get("round_token") != token:
             return
         if not both_ready(room):
             return
 
-        # perf_counter is monotonic and is used only inside this process.
         room["reaction_go_at"] = time.perf_counter()
+        round_number = room["round"]
 
     socketio.emit(
         "reaction_go",
         {
             "room": room_code,
-            "round_token": round_token,
+            "round": round_number,
+            "round_token": token,
         },
         to=room_code,
     )
 
 
-def finish_generic_round_if_ready(room_code):
+def finish_round_if_ready(room_code):
+    match_record = None
+
     with state_lock:
         room = rooms.get(room_code)
         if not room or len(room["players"]) != 2:
             return
 
         players = list(room["players"].values())
-        if any(p["score"] is None for p in players):
+        if any(p.get("score") is None for p in players):
             return
 
-        game = room["game"]
-        rule = GAME_RULES.get(game, "max")
-
         a, b = players
+        rule = GAME_RULES[room["game"]]
+
         if a["score"] == b["score"]:
             winner = None
             loser = None
+        elif rule == "min":
+            winner, loser = (a, b) if a["score"] < b["score"] else (b, a)
         else:
-            if rule == "min":
-                winner, loser = (a, b) if a["score"] < b["score"] else (b, a)
-            else:
-                winner, loser = (a, b) if a["score"] > b["score"] else (b, a)
+            winner, loser = (a, b) if a["score"] > b["score"] else (b, a)
 
-        room["winner_github_id"] = winner["github_id"] if winner else None
-
-        result_payload = {
+        result = {
             "room": room_code,
-            "game": game,
+            "game": room["game"],
+            "round": room["round"],
+            "draw": winner is None,
             "winner": public_player(winner) if winner else None,
             "loser": public_player(loser) if loser else None,
-            "draw": winner is None,
             "scores": {
                 str(a["github_id"]): a["score"],
                 str(b["github_id"]): b["score"],
@@ -362,20 +332,31 @@ def finish_generic_round_if_ready(room_code):
         }
 
         if winner and loser:
-            record_match(
-                game=game,
-                winner_github_id=winner["github_id"],
-                loser_github_id=loser["github_id"],
-                winner_score=winner["score"],
-                loser_score=loser["score"],
-            )
+            match_record = {
+                "game": room["game"],
+                "winner_github_id": winner["github_id"],
+                "loser_github_id": loser["github_id"],
+                "winner_score": winner["score"],
+                "loser_score": loser["score"],
+            }
 
-    socketio.emit("round_result", result_payload, to=room_code)
+        room["round"] += 1
+        room["round_token"] = None
+        room["reaction_go_at"] = None
+
+        for player in room["players"].values():
+            player["ready"] = False
+            player["score"] = None
+
+    if match_record:
+        record_match(**match_record)
+
+    socketio.emit("round_result", result, to=room_code)
     emit_room_state(room_code)
 
 
 # -----------------------------------------------------------------------------
-# HTTP PAGES
+# HTTP
 # -----------------------------------------------------------------------------
 
 @app.get("/")
@@ -383,34 +364,38 @@ def index():
     return render_template("index.html", user=current_user())
 
 
+def render_game(template_name):
+    return render_template(template_name, user=current_user())
+
+
 @app.get("/reaction")
 @login_required
 def reaction():
-    return render_template("reaction.html", user=current_user())
+    return render_game("reaction.html")
 
 
 @app.get("/typing")
 @login_required
 def typing():
-    return render_template("typing.html", user=current_user())
+    return render_game("typing.html")
 
 
 @app.get("/cps")
 @login_required
 def cps():
-    return render_template("cps.html", user=current_user())
+    return render_game("cps.html")
 
 
 @app.get("/aim")
 @login_required
 def aim():
-    return render_template("aim.html", user=current_user())
+    return render_game("aim.html")
 
 
 @app.get("/blind")
 @login_required
 def blind():
-    return render_template("blind.html", user=current_user())
+    return render_game("blind.html")
 
 
 @app.get("/stats")
@@ -434,7 +419,7 @@ def login_github():
 
     state = secrets.token_urlsafe(32)
     session["oauth_state"] = state
-    session["oauth_next"] = request.args.get("next") or "/"
+    session["oauth_next"] = safe_next_path(request.args.get("next"))
 
     params = {
         "client_id": GITHUB_CLIENT_ID,
@@ -442,7 +427,9 @@ def login_github():
         "scope": "read:user",
         "state": state,
     }
-    return redirect("https://github.com/login/oauth/authorize?" + urlencode(params))
+    return redirect(
+        "https://github.com/login/oauth/authorize?" + urlencode(params)
+    )
 
 
 @app.get("/auth/github/callback")
@@ -452,9 +439,15 @@ def github_callback():
 
     code = request.args.get("code")
     state = request.args.get("state")
-    expected_state = session.pop("oauth_state", None)
+    expected_state = session.get("oauth_state")
+    destination = safe_next_path(session.get("oauth_next"))
 
-    if not code or not state or not expected_state or not secrets.compare_digest(state, expected_state):
+    if (
+        not code
+        or not state
+        or not expected_state
+        or not secrets.compare_digest(state, expected_state)
+    ):
         return "Invalid GitHub OAuth state", 400
 
     token_response = requests.post(
@@ -473,11 +466,13 @@ def github_callback():
     access_token = token_data.get("access_token")
 
     if not access_token:
-        return jsonify({
-            "ok": False,
-            "error": "github_token_exchange_failed",
-            "details": token_data,
-        }), 400
+        return jsonify(
+            {
+                "ok": False,
+                "error": "github_token_exchange_failed",
+                "details": token_data,
+            }
+        ), 400
 
     user_response = requests.get(
         "https://api.github.com/user",
@@ -493,8 +488,8 @@ def github_callback():
 
     user = {
         "github_id": int(gh["id"]),
-        "login": gh["login"],
-        "avatar_url": gh.get("avatar_url") or "",
+        "login": str(gh["login"]),
+        "avatar_url": str(gh.get("avatar_url") or ""),
     }
 
     upsert_github_user(
@@ -507,8 +502,6 @@ def github_callback():
     session["user"] = user
     session.permanent = True
 
-    destination = "/"
-    # oauth_next is cleared by session.clear(), so only allow home after login.
     return redirect(destination)
 
 
@@ -519,7 +512,7 @@ def logout():
 
 
 # -----------------------------------------------------------------------------
-# HTTP API
+# API
 # -----------------------------------------------------------------------------
 
 @app.get("/api/me")
@@ -528,20 +521,23 @@ def api_me():
     if not user:
         return jsonify({"authenticated": False, "user": None}), 401
 
-    stored = get_user_by_github_id(user["github_id"])
-    return jsonify({
-        "authenticated": True,
-        "user": stored or user,
-    })
+    return jsonify(
+        {
+            "authenticated": True,
+            "user": get_user_by_github_id(user["github_id"]) or user,
+        }
+    )
 
 
 @app.get("/api/stats")
 def api_stats():
-    return jsonify({
-        "ok": True,
-        "leaderboard": get_leaderboard(limit=20),
-        "recent_matches": get_recent_matches(limit=30),
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "leaderboard": get_leaderboard(limit=20),
+            "recent_matches": get_recent_matches(limit=30),
+        }
+    )
 
 
 @app.get("/api/rooms/<room_code>")
@@ -554,309 +550,227 @@ def api_room(room_code):
 
 
 # -----------------------------------------------------------------------------
-# SOCKET.IO CONNECTION
+# SOCKET.IO
 # -----------------------------------------------------------------------------
 
 @socketio.on("connect")
 def on_connect(auth=None):
-    user = socket_user()
+    user = current_user()
     if not user:
         return False
 
-    add_online_user(user["login"], request.sid)
-
-    emit("auth_user", {
-        "github_id": user["github_id"],
-        "login": user["login"],
-        "avatar_url": user["avatar_url"],
-    })
-
-    socketio.emit(
-        "presence",
-        {"login": user["login"], "online": True},
-        broadcast=True,
+    emit(
+        "auth_user",
+        {
+            "github_id": user["github_id"],
+            "login": user["login"],
+            "avatar_url": user["avatar_url"],
+        },
     )
+    emit("socket_status", {"connected": True})
 
 
 @socketio.on("disconnect")
 def on_disconnect(reason=None):
-    user = socket_user()
+    user = current_user()
     if not user:
         return
 
-    remove_online_sid(user["login"], request.sid)
-    remove_player_from_room(user["github_id"], request.sid)
+    room_code = find_user_room(user["github_id"])
+    if not room_code:
+        return
 
+    sid = request.sid
     with state_lock:
-        still_online = bool(online_users.get(user["login"].lower()))
+        room = rooms.get(room_code)
+        player = room["players"].get(user["github_id"]) if room else None
+        if not player or player.get("sid") != sid:
+            return
 
-    if not still_online:
-        socketio.emit(
-            "presence",
-            {"login": user["login"], "online": False},
-            broadcast=True,
-        )
+        player["connected"] = False
+        player["ready"] = False
+        room["round_token"] = None
+        room["reaction_go_at"] = None
 
+    emit_room_state(room_code)
+    socketio.start_background_task(
+        disconnect_cleanup,
+        user["github_id"],
+        room_code,
+        sid,
+    )
 
-# -----------------------------------------------------------------------------
-# ROOM EVENTS
-# -----------------------------------------------------------------------------
 
 @socketio.on("create_room")
 def on_create_room(data=None):
-    user = socket_user()
+    user = current_user()
     if not user:
-        return emit("room_error", {"message": "Not authenticated"})
+        return emit("room_error", {"message": "Нужно войти через GitHub."})
 
     data = data or {}
     game = ensure_game(data.get("game"))
-    room_code = create_room_for_user(user, game)
 
-    emit("room_created", {
-        "room": room_code,
-        "game": game,
-    })
+    old_room = find_user_room(user["github_id"])
+    if old_room:
+        try:
+            leave_room(old_room)
+        except Exception:
+            pass
+        result = remove_player_state(user["github_id"], old_room)
+        notify_player_removed(result)
+
+    room_code = generate_room_code()
+
+    with state_lock:
+        rooms[room_code] = {
+            "host_github_id": user["github_id"],
+            "game": game,
+            "round": 1,
+            "round_token": None,
+            "reaction_go_at": None,
+            "players": {
+                user["github_id"]: {
+                    **user,
+                    "sid": request.sid,
+                    "connected": True,
+                    "ready": False,
+                    "score": None,
+                }
+            },
+        }
+
+    join_room(room_code)
+    emit("room_created", {"room": room_code, "game": game})
     emit_room_state(room_code)
 
 
 @socketio.on("join_room")
 def on_join_room(data=None):
-    user = socket_user()
+    user = current_user()
     if not user:
-        return emit("room_error", {"message": "Not authenticated"})
+        return emit("room_error", {"message": "Нужно войти через GitHub."})
 
     data = data or {}
     room_code = str(data.get("room") or "").upper().strip()
 
-    with state_lock:
-        room = rooms.get(room_code)
-        if not room:
-            return emit("room_error", {"message": "Room not found"})
-        if user["github_id"] in room["players"]:
-            join_room(room_code)
-            return emit_room_state(room_code)
-        if len(room["players"]) >= 2:
-            return emit("room_error", {"message": "Room is full"})
+    if len(room_code) != 5:
+        return emit("room_error", {"message": "Код комнаты состоит из 5 символов."})
 
     old_room = find_user_room(user["github_id"])
     if old_room and old_room != room_code:
-        remove_player_from_room(user["github_id"])
+        try:
+            leave_room(old_room)
+        except Exception:
+            pass
+        result = remove_player_state(user["github_id"], old_room)
+        notify_player_removed(result)
 
     with state_lock:
         room = rooms.get(room_code)
-        if not room or len(room["players"]) >= 2:
-            return emit("room_error", {"message": "Room is unavailable"})
+        if not room:
+            return emit("room_error", {"message": "Комната не найдена."})
 
-        room["players"][user["github_id"]] = {
-            **user,
-            "sid": request.sid,
-            "ready": False,
-            "score": None,
-        }
+        existing = room["players"].get(user["github_id"])
+        if existing:
+            existing["sid"] = request.sid
+            existing["connected"] = True
+            existing["ready"] = False
+            existing["score"] = None
+        else:
+            if len(room["players"]) >= 2:
+                return emit("room_error", {"message": "Комната уже заполнена."})
+
+            room["players"][user["github_id"]] = {
+                **user,
+                "sid": request.sid,
+                "connected": True,
+                "ready": False,
+                "score": None,
+            }
+
+        room["round_token"] = None
+        room["reaction_go_at"] = None
 
     join_room(room_code)
-    socketio.emit(
-        "player_joined",
-        {
-            "room": room_code,
-            "player": user,
-        },
-        to=room_code,
-    )
+    emit("room_joined", {"room": room_code})
     emit_room_state(room_code)
 
 
 @socketio.on("leave_room")
 def on_leave_room(data=None):
-    user = socket_user()
+    user = current_user()
     if not user:
         return
-    remove_player_from_room(user["github_id"], request.sid)
+
+    room_code = find_user_room(user["github_id"])
+    if not room_code:
+        return
+
+    try:
+        leave_room(room_code)
+    except Exception:
+        pass
+
+    result = remove_player_state(user["github_id"], room_code)
+    notify_player_removed(result)
+    emit("room_left", {"room": room_code})
 
 
 @socketio.on("player_ready")
 def on_player_ready(data=None):
-    user = socket_user()
+    user = current_user()
     if not user:
         return
 
     room_code = find_user_room(user["github_id"])
     if not room_code:
-        return emit("room_error", {"message": "You are not in a room"})
+        return emit("room_error", {"message": "Сначала войдите в комнату."})
 
     with state_lock:
         room = rooms.get(room_code)
-        if not room or user["github_id"] not in room["players"]:
+        player = room["players"].get(user["github_id"]) if room else None
+
+        if not room or not player:
             return
 
-        player = room["players"][user["github_id"]]
+        if len(room["players"]) != 2:
+            return emit("room_error", {"message": "Ждём второго игрока."})
+
         player["ready"] = True
         player["score"] = None
 
-        should_start = both_ready(room)
-
-        if should_start:
-            room["winner_github_id"] = None
-            room["round_token"] = secrets.token_urlsafe(12)
-            round_token = room["round_token"]
-            game = room["game"]
-        else:
-            round_token = None
-            game = room["game"]
-
     emit_room_state(room_code)
+    start_round_if_possible(room_code)
 
-    if not should_start:
-        return
-
-    socketio.emit(
-        "all_players_ready",
-        {
-            "room": room_code,
-            "game": game,
-            "round_token": round_token,
-        },
-        to=room_code,
-    )
-
-    if game == "reaction":
-        socketio.start_background_task(
-            start_reaction_round,
-            room_code,
-            round_token,
-        )
-    else:
-        socketio.emit(
-            "round_start",
-            {
-                "room": room_code,
-                "game": game,
-                "round_token": round_token,
-            },
-            to=room_code,
-        )
-
-
-@socketio.on("reset_ready")
-def on_reset_ready(data=None):
-    user = socket_user()
-    if not user:
-        return
-
-    room_code = find_user_room(user["github_id"])
-    if not room_code:
-        return
-
-    with state_lock:
-        room = rooms.get(room_code)
-        if not room:
-            return
-        reset_room_round(room)
-
-    emit_room_state(room_code)
-
-
-# -----------------------------------------------------------------------------
-# CHALLENGES
-# -----------------------------------------------------------------------------
-
-@socketio.on("challenge")
-def on_challenge(data=None):
-    user = socket_user()
-    if not user:
-        return
-
-    data = data or {}
-    target_login = str(data.get("target_login") or "").strip()
-    game = ensure_game(data.get("game"))
-
-    if not target_login:
-        return emit("challenge_error", {"message": "target_login is required"})
-
-    if target_login.lower() == user["login"].lower():
-        return emit("challenge_error", {"message": "You cannot challenge yourself"})
-
-    room_code = create_room_for_user(user, game)
-
-    delivered = emit_to_login(
-        target_login,
-        "incoming_challenge",
-        {
-            "room": room_code,
-            "game": game,
-            "from": user,
-        },
-    )
-
-    if not delivered:
-        remove_player_from_room(user["github_id"])
-        return emit("challenge_error", {"message": f"{target_login} is offline"})
-
-    emit("challenge_sent", {
-        "target_login": target_login,
-        "room": room_code,
-        "game": game,
-    })
-    emit_room_state(room_code)
-
-
-@socketio.on("challenge_response")
-def on_challenge_response(data=None):
-    user = socket_user()
-    if not user:
-        return
-
-    data = data or {}
-    room_code = str(data.get("room") or "").upper().strip()
-    accepted = bool(data.get("accepted"))
-
-    if not accepted:
-        with state_lock:
-            room = rooms.get(room_code)
-            host = room["players"].get(room["host_github_id"]) if room else None
-            host_sid = host.get("sid") if host else None
-
-        if host_sid:
-            socketio.emit(
-                "challenge_declined",
-                {"by": user},
-                to=host_sid,
-            )
-        return
-
-    on_join_room({"room": room_code})
-
-
-# -----------------------------------------------------------------------------
-# GAME EVENTS
-# -----------------------------------------------------------------------------
 
 @socketio.on("reaction_click")
 def on_reaction_click(data=None):
-    user = socket_user()
+    user = current_user()
     if not user:
         return
 
-    data = data or {}
     room_code = find_user_room(user["github_id"])
     if not room_code:
         return
+
+    data = data or {}
+    token = str(data.get("round_token") or "")
 
     with state_lock:
         room = rooms.get(room_code)
         if not room or room["game"] != "reaction":
             return
 
-        player = room["players"].get(user["github_id"])
-        if not player:
+        if not token or room.get("round_token") != token:
             return
 
-        if player["score"] is not None:
+        player = room["players"].get(user["github_id"])
+        if not player or player.get("score") is not None:
             return
 
         go_at = room.get("reaction_go_at")
+
         if go_at is None:
-            # False start.
             player["score"] = 999999.0
             socketio.emit(
                 "false_start",
@@ -864,7 +778,10 @@ def on_reaction_click(data=None):
                 to=room_code,
             )
         else:
-            player["score"] = round((time.perf_counter() - go_at) * 1000.0, 2)
+            player["score"] = round(
+                (time.perf_counter() - go_at) * 1000.0,
+                2,
+            )
             socketio.emit(
                 "reaction_result",
                 {
@@ -874,24 +791,29 @@ def on_reaction_click(data=None):
                 to=room_code,
             )
 
-    finish_generic_round_if_ready(room_code)
+    finish_round_if_ready(room_code)
 
 
 @socketio.on("submit_score")
 def on_submit_score(data=None):
-    user = socket_user()
+    user = current_user()
     if not user:
         return
 
-    data = data or {}
     room_code = find_user_room(user["github_id"])
     if not room_code:
         return
 
+    data = data or {}
+    token = str(data.get("round_token") or "")
+
     try:
         score = float(data.get("score"))
     except (TypeError, ValueError):
-        return emit("game_error", {"message": "score must be numeric"})
+        return emit("game_error", {"message": "Некорректный результат."})
+
+    if not math.isfinite(score) or score < 0 or score > 1_000_000_000:
+        return emit("game_error", {"message": "Некорректный результат."})
 
     with state_lock:
         room = rooms.get(room_code)
@@ -899,33 +821,29 @@ def on_submit_score(data=None):
             return
 
         if room["game"] == "reaction":
-            return emit("game_error", {"message": "Use reaction_click for reaction mode"})
+            return emit("game_error", {"message": "Для реакции используется отдельный обработчик."})
+
+        if not token or room.get("round_token") != token:
+            return emit("game_error", {"message": "Этот раунд уже завершён."})
 
         player = room["players"].get(user["github_id"])
-        if not player:
+        if not player or player.get("score") is not None:
             return
 
-        if player["score"] is not None:
-            return
-
-        player["score"] = score
+        player["score"] = round(score, 3)
 
         socketio.emit(
             "score_submitted",
             {
                 "player": public_player(player),
-                "score": score,
                 "game": room["game"],
+                "score": player["score"],
             },
             to=room_code,
         )
 
-    finish_generic_round_if_ready(room_code)
+    finish_round_if_ready(room_code)
 
-
-# -----------------------------------------------------------------------------
-# LOCAL DEV ENTRYPOINT
-# -----------------------------------------------------------------------------
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))

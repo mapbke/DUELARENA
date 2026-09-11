@@ -1,0 +1,63 @@
+<section class="lobby" data-game="{{ game }}">
+    <div class="lobby-head">
+        <div>
+            <div class="eyebrow">КОМНАТА</div>
+            <h2 id="lobby-title">Подключитесь к сопернику</h2>
+        </div>
+        <div class="room-badge hidden" id="room-badge">
+            ROOM <strong id="room-code-display">-----</strong>
+        </div>
+    </div>
+
+    <div id="lobby-setup" class="lobby-setup">
+        <button class="primary room-create" id="create-room-button" type="button">
+            Создать комнату
+            <small>Вы получите код для второго игрока</small>
+        </button>
+
+        <div class="or"><span>или</span></div>
+
+        <div class="join-box">
+            <label for="room-code-input">Уже есть код?</label>
+            <div class="join-row">
+                <input
+                    id="room-code-input"
+                    class="room-code-input"
+                    maxlength="5"
+                    placeholder="ABCDE"
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+                <button class="secondary" id="join-room-button" type="button">
+                    Войти
+                </button>
+            </div>
+        </div>
+
+        <p class="hint">Первый игрок нажимает «Создать комнату». Второй вводит полученный 5-значный код.</p>
+    </div>
+
+    <div id="lobby-active" class="lobby-active hidden">
+        <div class="room-tools">
+            <div>
+                <small>Код комнаты</small>
+                <strong id="big-room-code">-----</strong>
+            </div>
+            <button class="secondary" id="copy-room-button" type="button">Копировать</button>
+            <button class="ghost danger" id="leave-room-button" type="button">Выйти</button>
+        </div>
+
+        <div class="players">
+            <div class="player-slot" id="player-one"></div>
+            <div class="versus">VS</div>
+            <div class="player-slot right" id="player-two"></div>
+        </div>
+
+        <div class="ready-area">
+            <div class="lobby-status" id="lobby-status">Ждём второго игрока...</div>
+            <button class="primary ready-button hidden" id="ready-button" type="button">
+                Я готов
+            </button>
+        </div>
+    </div>
+</section>

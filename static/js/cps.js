@@ -6,23 +6,37 @@
     const rateNode = document.getElementById("cps-rate");
     const message = document.getElementById("game-message");
 
-    const duration = 10_000;
+    const duration = 10000;
+    let token = null;
     let active = false;
     let clicks = 0;
     let startedAt = 0;
     let raf = null;
 
     function reset() {
+        token = null;
         active = false;
         clicks = 0;
         startedAt = 0;
         button.disabled = true;
-        button.textContent = "READY UP";
+        button.textContent = "ЖДЁМ РАУНД";
+        timeNode.textContent = "10.0";
         clicksNode.textContent = "0";
         rateNode.textContent = "0.0";
-        timeNode.textContent = "10.0s";
         message.textContent = "";
         if (raf) cancelAnimationFrame(raf);
+    }
+
+    function finish() {
+        if (!active) return;
+        active = false;
+        button.disabled = true;
+        button.textContent = "РЕЗУЛЬТАТ ОТПРАВЛЕН";
+
+        socket.emit("submit_score", {
+            round_token: token,
+            score: clicks,
+        });
     }
 
     function tick() {
@@ -30,31 +44,26 @@
 
         const elapsed = performance.now() - startedAt;
         const left = Math.max(0, duration - elapsed);
-        const seconds = Math.max(elapsed / 1000, .001);
+        timeNode.textContent = (left / 1000).toFixed(1);
 
-        timeNode.textContent = `${(left / 1000).toFixed(1)}s`;
+        const seconds = Math.max(elapsed / 1000, .001);
         rateNode.textContent = (clicks / seconds).toFixed(1);
 
         if (left <= 0) {
-            active = false;
-            button.disabled = true;
-            button.textContent = "SUBMITTED";
-
-            const score = clicks;
-            message.textContent = `${clicks} clicks submitted`;
-            socket.emit("submit_score", { score });
+            finish();
             return;
         }
 
         raf = requestAnimationFrame(tick);
     }
 
-    window.addEventListener("duo:round-start", () => {
+    window.addEventListener("duo:round-start", (event) => {
         reset();
+        token = event.detail.round_token;
         active = true;
         startedAt = performance.now();
         button.disabled = false;
-        button.textContent = "CLICK!";
+        button.textContent = "КЛИКАЙ";
         raf = requestAnimationFrame(tick);
     });
 
@@ -66,8 +75,11 @@
     });
 
     window.addEventListener("duo:round-result", (event) => {
-        const r = event.detail;
-        message.textContent = r.draw ? "DRAW" : `${r.winner.login} wins with ${r.winner.score} clicks`;
+        const result = event.detail;
+        message.textContent = result.draw
+            ? "Ничья."
+            : `${result.winner.login} побеждает: ${result.winner.score} кликов.`;
+        token = null;
     });
 
     reset();

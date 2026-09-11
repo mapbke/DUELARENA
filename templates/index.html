@@ -1,126 +1,57 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuoArena // Hub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/integration.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}DuoArena // Hub{% endblock %}
 
-    {% if user %}
-    <div class="user-status-bar">
-        <div class="user-chip">
-            <img src="{{ user.avatar_url }}" alt="">
-            <div class="user-chip-meta">
-                <strong>{{ user.login }}</strong>
-                <small>GITHUB CONNECTED</small>
-            </div>
-        </div>
-        <a class="auth-link" href="{{ url_for('logout') }}">LOGOUT</a>
-    </div>
-    {% else %}
-    <div class="user-status-bar logged-out">
-        <span style="color:var(--text-muted); font-family:var(--font-mono);">NOT AUTHENTICATED</span>
-        <a class="auth-link" href="{{ url_for('login_github') }}">LOGIN WITH GITHUB</a>
-    </div>
-    {% endif %}
-
-    <div class="container">
-        <header class="header">
-            <h1>DUOARENA</h1>
-            <p>// PRIVATE REALTIME BATTLEGROUND</p>
-        </header>
-
-        <main class="grid">
-            <div class="card">
-                <div>
-                    <div class="card-tag">01. Speed</div>
-                    <div class="card-title">Reaction Duel</div>
-                    <div class="card-desc">Server-controlled signal. Lowest reaction time wins.</div>
-                </div>
-                <div class="hub-card-actions">
-                    <a class="hub-open" href="{{ url_for('reaction') }}">OPEN ARENA</a>
-                </div>
-            </div>
-
-            <div class="card">
-                <div>
-                    <div class="card-tag">02. Focus</div>
-                    <div class="card-title">Typing Duel</div>
-                    <div class="card-desc">Type the same phrase. Higher WPM wins.</div>
-                </div>
-                <div class="hub-card-actions">
-                    <a class="hub-open" href="{{ url_for('typing') }}">OPEN ARENA</a>
-                </div>
-            </div>
-
-            <div class="card">
-                <div>
-                    <div class="card-tag">03. Clicks</div>
-                    <div class="card-title">CPS Battle</div>
-                    <div class="card-desc">Ten seconds. Maximum clicks. Mouse abuse included.</div>
-                </div>
-                <div class="hub-card-actions">
-                    <a class="hub-open" href="{{ url_for('cps') }}">OPEN ARENA</a>
-                </div>
-            </div>
-
-            <div class="card">
-                <div>
-                    <div class="card-tag">04. Aim</div>
-                    <div class="card-title">Aim Duel</div>
-                    <div class="card-desc">Hit 15 targets. Higher targets-per-second score wins.</div>
-                </div>
-                <div class="hub-card-actions">
-                    <a class="hub-open" href="{{ url_for('aim') }}">OPEN ARENA</a>
-                </div>
-            </div>
-
-            <div class="card">
-                <div>
-                    <div class="card-tag">05. Timing</div>
-                    <div class="card-title">Blind Timing</div>
-                    <div class="card-desc">Stop as close as possible to exactly 5.000 seconds.</div>
-                </div>
-                <div class="hub-card-actions">
-                    <a class="hub-open" href="{{ url_for('blind') }}">OPEN ARENA</a>
-                </div>
-            </div>
-
-            <a href="{{ url_for('stats') }}" class="card stats-card">
-                <div>
-                    <div class="card-tag">Global</div>
-                    <div class="card-title" style="margin:0;">View Full Statistics</div>
-                </div>
-                <div class="card-arrow" style="margin:0;">→</div>
-            </a>
-        </main>
+{% block content %}
+<main class="page hub-page">
+    <section class="hero">
+        <div class="eyebrow">PRIVATE 1V1 BATTLEGROUND</div>
+        <h1>Два игрока.<br><span>Одна комната.</span></h1>
+        <p>Выберите режим, создайте комнату и отправьте другу короткий код. Никаких сложных лобби.</p>
 
         {% if not user %}
-        <div class="game-message" style="margin-top:2rem;">
-            Login with GitHub to enter game arenas, create rooms and challenge players.
+        <a class="primary big" href="{{ url_for('login_github') }}">
+            Войти через GitHub
+        </a>
+        {% else %}
+        <div class="how-it-works">
+            <div><b>1</b><span>Выберите режим</span></div>
+            <div><b>2</b><span>Создайте комнату</span></div>
+            <div><b>3</b><span>Отправьте код другу</span></div>
         </div>
         {% endif %}
-    </div>
+    </section>
 
-    {% if user %}
-    <div class="challenge-modal" id="challenge-modal">
-        <div class="challenge-card">
-            <div class="room-title">// incoming challenge</div>
-            <h3 id="challenge-title">Challenge received</h3>
-            <p id="challenge-text"></p>
-            <div class="challenge-actions">
-                <button class="room-action" id="challenge-accept" type="button">ACCEPT</button>
-                <button class="secondary-button" id="challenge-decline" type="button">DECLINE</button>
+    <section class="game-grid">
+        {% set games = [
+            ('reaction', '01', 'REACTION', 'Reaction Duel', 'Ждите зелёного сигнала и кликайте быстрее соперника.'),
+            ('typing', '02', 'TYPING', 'Typing Duel', 'Одинаковый текст для обоих. Побеждает больший WPM.'),
+            ('cps', '03', 'CLICKS', 'CPS Battle', '10 секунд кликов. Побеждает большее количество.'),
+            ('aim', '04', 'AIM', 'Aim Duel', '15 целей. Побеждает лучший темп попаданий.'),
+            ('blind', '05', 'TIMING', 'Blind Timing', 'Остановите таймер как можно ближе к 5.000 секундам.')
+        ] %}
+
+        {% for endpoint, number, tag, name, description in games %}
+        <article class="game-card">
+            <div class="card-number">{{ number }}</div>
+            <div class="card-tag">{{ tag }}</div>
+            <h2>{{ name }}</h2>
+            <p>{{ description }}</p>
+
+            {% if user %}
+            <a class="card-action" href="{{ url_for(endpoint) }}">Играть →</a>
+            {% else %}
+            <a class="card-action" href="{{ url_for('login_github', next=url_for(endpoint)) }}">Войти и играть →</a>
+            {% endif %}
+        </article>
+        {% endfor %}
+
+        <a class="stats-link" href="{{ url_for('stats') }}">
+            <div>
+                <small>GLOBAL</small>
+                <strong>Статистика и история матчей</strong>
             </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/hub.js') }}"></script>
-    {% endif %}
-</body>
-</html>
+            <span>→</span>
+        </a>
+    </section>
+</main>
+{% endblock %}

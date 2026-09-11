@@ -6,33 +6,47 @@
     const differenceNode = document.getElementById("blind-difference");
     const message = document.getElementById("game-message");
 
+    let token = null;
     let active = false;
     let startedAt = 0;
     let hideTimer = null;
+    let raf = null;
 
     function reset() {
+        token = null;
         active = false;
         startedAt = 0;
         display.textContent = "WAITING";
         stopButton.disabled = true;
-        stopButton.textContent = "READY UP";
+        stopButton.textContent = "ЖДЁМ РАУНД";
         resultNode.textContent = "—";
         differenceNode.textContent = "—";
         message.textContent = "";
         if (hideTimer) clearTimeout(hideTimer);
+        if (raf) cancelAnimationFrame(raf);
     }
 
-    window.addEventListener("duo:round-start", () => {
+    function animateVisibleTimer() {
+        if (!active) return;
+        const elapsed = performance.now() - startedAt;
+        display.textContent = `${(elapsed / 1000).toFixed(3)}s`;
+        raf = requestAnimationFrame(animateVisibleTimer);
+    }
+
+    window.addEventListener("duo:round-start", (event) => {
         reset();
+        token = event.detail.round_token;
         active = true;
         startedAt = performance.now();
 
-        display.textContent = "0.000s";
         stopButton.disabled = false;
-        stopButton.textContent = "STOP";
+        stopButton.textContent = "СТОП";
+        animateVisibleTimer();
 
         hideTimer = setTimeout(() => {
-            if (active) display.textContent = "[ BLIND MODE ]";
+            if (!active) return;
+            if (raf) cancelAnimationFrame(raf);
+            display.textContent = "[ BLIND MODE ]";
         }, 900);
     });
 
@@ -41,7 +55,10 @@
 
         active = false;
         stopButton.disabled = true;
-        stopButton.textContent = "SUBMITTED";
+        stopButton.textContent = "РЕЗУЛЬТАТ ОТПРАВЛЕН";
+
+        if (raf) cancelAnimationFrame(raf);
+        if (hideTimer) clearTimeout(hideTimer);
 
         const elapsedMs = performance.now() - startedAt;
         const differenceMs = Math.abs(5000 - elapsedMs);
@@ -50,17 +67,18 @@
         resultNode.textContent = `${(elapsedMs / 1000).toFixed(3)}s`;
         differenceNode.textContent = `${(differenceMs / 1000).toFixed(3)}s`;
 
-        // Backend uses "min" for blind: lower absolute error wins.
         socket.emit("submit_score", {
-            score: Number(differenceMs.toFixed(2))
+            round_token: token,
+            score: Number(differenceMs.toFixed(2)),
         });
     });
 
     window.addEventListener("duo:round-result", (event) => {
-        const r = event.detail;
-        message.textContent = r.draw
-            ? "DRAW"
-            : `${r.winner.login} wins · error ${(r.winner.score / 1000).toFixed(3)}s`;
+        const result = event.detail;
+        message.textContent = result.draw
+            ? "Ничья."
+            : `${result.winner.login} побеждает с ошибкой ${(result.winner.score / 1000).toFixed(3)}s.`;
+        token = null;
     });
 
     reset();

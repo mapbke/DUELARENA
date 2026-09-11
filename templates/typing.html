@@ -1,50 +1,41 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuoArena // Typing Duel</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/integration.css') }}">
-</head>
-<body>
-    <a href="{{ url_for('index') }}" class="nav-back">← BACK TO HUB</a>
+{% extends "base.html" %}
+{% block title %}DuoArena // Typing Duel{% endblock %}
 
-    <div class="user-status-bar">
-        <div class="user-chip">
-            <img src="{{ user.avatar_url }}" alt="">
-            <div class="user-chip-meta">
-                <strong>{{ user.login }}</strong>
-                <small>GITHUB CONNECTED</small>
-            </div>
-        </div>
-        <a class="auth-link" href="{{ url_for('logout') }}">LOGOUT</a>
+{% block content %}
+<main class="page game-page">
+    <a class="back-link" href="{{ url_for('index') }}">← На главную</a>
+
+    <section class="game-heading">
+        <div class="eyebrow">SAME TEXT / HIGHER WPM WINS</div>
+        <h1>Typing Duel</h1>
+    </section>
+
+    {% set game = 'typing' %}
+    {% include "_lobby.html" %}
+
+    
+<section class="game-stage locked" id="game-stage">
+    <div class="stage-lock" id="stage-lock">
+        <strong>Сначала подключитесь к комнате</strong>
+        <span>Когда оба нажмут «Я готов», текст станет доступен.</span>
     </div>
 
-    <div class="container duel-container">
-        <div class="header" style="margin-bottom:0;">
-            <h1 style="font-size:2rem;">TYPING DUEL</h1>
-            <p>// HIGHER WPM WINS</p>
-        </div>
+    <div class="typing-text" id="typing-text"></div>
+    <textarea id="typing-input" class="typing-input" rows="4" disabled
+              placeholder="Раунд ещё не начался"></textarea>
 
-        {% set game_name = 'typing' %}
-        {% include '_room_lobby.html' %}
-
-        <div class="typing-box">
-            <div class="text-display" id="typing-text"></div>
-            <input id="typing-input" type="text" class="typing-input"
-                   placeholder="Ready up first..." disabled autocomplete="off">
-
-            <div class="typing-stats-live">
-                <div class="stat-live-item"><span>Speed:</span> <span id="typing-wpm">0 WPM</span></div>
-                <div class="stat-live-item"><span>Accuracy:</span> <span id="typing-accuracy">100%</span></div>
-            </div>
-        </div>
-        <div class="game-message" id="game-message"></div>
+    <div class="live-stats">
+        <div><small>Скорость</small><strong id="typing-wpm">0 WPM</strong></div>
+        <div><small>Точность</small><strong id="typing-accuracy">100%</strong></div>
     </div>
-<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/room.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/typing.js') }}"></script>
-</body>
-</html>
+
+    <div class="result-line" id="game-message"></div>
+</section>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+<script src="{{ url_for('static', filename='js/typing.js') }}"></script>
+{% endblock %}

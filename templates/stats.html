@@ -1,49 +1,51 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuoArena // Statistics</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/integration.css') }}">
-</head>
-<body>
-    <a href="{{ url_for('index') }}" class="nav-back">← BACK TO HUB</a>
+{% extends "base.html" %}
+{% block title %}DuoArena // Stats{% endblock %}
 
-    <div class="container">
-        <header class="header" style="margin-bottom:2rem;">
-            <h1>LEADERBOARD</h1>
-            <p>// GITHUB USERS / MATCH HISTORY</p>
-        </header>
+{% block content %}
+<main class="page stats-page">
+    <a class="back-link" href="{{ url_for('index') }}">← На главную</a>
 
-        <div class="player-stats-card">
-            <div class="room-title">// leaderboard</div>
-            <div style="overflow-x:auto;">
-                <table class="stats-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Player</th>
-                            <th>Wins</th>
-                            <th>Losses</th>
-                            <th>Winrate</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body">
-                        <tr><td colspan="5">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+    <section class="game-heading">
+        <div class="eyebrow">GLOBAL</div>
+        <h1>Статистика</h1>
+    </section>
+
+    <section class="stats-card">
+        <div class="section-title">
+            <h2>Лидерборд</h2>
+            <span>Победы / поражения / winrate</span>
         </div>
 
-        <div class="player-stats-card" style="margin-top:1.5rem;">
-            <div class="room-title">// recent matches</div>
-            <div class="match-list" id="match-list">
-                <div class="match-row">Loading...</div>
-            </div>
+        <div class="table-wrap">
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Игрок</th>
+                        <th>W</th>
+                        <th>L</th>
+                        <th>WR</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <tr><td colspan="5">Загрузка...</td></tr>
+                </tbody>
+            </table>
         </div>
-    </div>
+    </section>
 
-    <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
-</body>
-</html>
+    <section class="stats-card">
+        <div class="section-title">
+            <h2>Последние матчи</h2>
+            <span>История завершённых дуэлей</span>
+        </div>
+        <div class="match-list" id="match-list">
+            <div class="match-row">Загрузка...</div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stats.js') }}"></script>
+{% endblock %}
